@@ -71,11 +71,6 @@ class Dependencies {
       sourceUrl: 'https://github.com/material-foundation/material-dynamic-color-flutter',
     ),
     Dependency(
-      name: 'fijkplayer (Aves fork)',
-      license: mit,
-      sourceUrl: 'https://github.com/deckerst/fijkplayer',
-    ),
-    Dependency(
       name: 'Floating',
       license: mit,
       sourceUrl: 'https://github.com/wrbl606/floating',
@@ -139,6 +134,12 @@ class Dependencies {
       license: bsd3,
       licenseUrl: 'https://github.com/flutter/plugins/blob/main/packages/url_launcher/url_launcher/LICENSE',
       sourceUrl: 'https://github.com/flutter/plugins/tree/main/packages/url_launcher/url_launcher',
+    ),
+    Dependency(
+      name: 'Video Player',
+      license: bsd3,
+      licenseUrl: 'https://github.com/flutter/plugins/blob/master/packages/video_player/video_player/LICENSE',
+      sourceUrl: 'https://github.com/flutter/plugins/tree/master/packages/video_player/video_player',
     ),
     Dependency(
       name: 'Volume Controller',

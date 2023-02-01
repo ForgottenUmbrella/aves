@@ -42,7 +42,6 @@ import 'package:aves/widgets/welcome_page.dart';
 import 'package:aves_utils/aves_utils.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:equatable/equatable.dart';
-import 'package:fijkplayer/fijkplayer.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -439,7 +438,6 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
     await _onTvLayoutChanged();
     _monitorSettings();
 
-    FijkLog.setLevel(FijkLogLevel.Warn);
     unawaited(_setupErrorReporting());
 
     debugPrint('App setup in ${stopwatch.elapsed.inMilliseconds}ms');

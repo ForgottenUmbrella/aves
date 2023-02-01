@@ -34,11 +34,11 @@ dependencies:
   aves_report:
     path: plugins/aves_report
   aves_report_platform:
-    path: plugins/aves_report_crashlytics
+    path: plugins/aves_report_console
   aves_services:
     path: plugins/aves_services
   aves_services_platform:
-    path: plugins/aves_services_google
+    path: plugins/aves_services_none
   aves_video:
     path: plugins/aves_video
   aves_ui:
@@ -61,10 +61,7 @@ dependencies:
   expansion_tile_card:
     git:
       url: https://github.com/deckerst/expansion_tile_card.git
-  fijkplayer:
-    git:
-      url: https://github.com/deckerst/fijkplayer.git
-      ref: aves
+  ffmpeg_kit_flutter:
   flex_color_picker:
   floating:
   fluster:
@@ -110,6 +107,7 @@ dependencies:
   transparent_image:
   tuple:
   url_launcher:
+  video_player:
   volume_controller:
   xml:
 

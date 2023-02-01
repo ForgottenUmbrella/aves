@@ -66,10 +66,11 @@ android {
         // minSdkVersion constraints:
         // - Flutter & other plugins: 16
         // - google_maps_flutter v2.1.1: 20
+        // - ffmpeg_kit: 24
         // - to build XML documents from XMP data, `metadata-extractor` and `PixyMeta` rely on `DocumentBuilder`,
         // which implementation `DocumentBuilderImpl` is provided by the OS and is not customizable on Android,
         // but the implementation on API <19 is not robust enough and fails to build XMP documents
-        minSdkVersion 19
+        minSdkVersion 24
         targetSdkVersion 33
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
