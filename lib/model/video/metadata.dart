@@ -16,9 +16,9 @@ import 'package:aves/utils/file_utils.dart';
 import 'package:aves/utils/math_utils.dart';
 import 'package:aves/utils/string_utils.dart';
 import 'package:aves/utils/time_utils.dart';
-import 'package:aves/widgets/viewer/video/fijkplayer.dart';
+import 'package:aves/widgets/viewer/video/video_player.dart';
 import 'package:collection/collection.dart';
-import 'package:fijkplayer/fijkplayer.dart';
+import 'package:ffmpeg_kit_flutter/ffprobe_kit.dart';
 import 'package:flutter/foundation.dart';
 
 class VideoMetadataFormatter {
@@ -45,15 +45,19 @@ class VideoMetadataFormatter {
   };
 
   static Future<Map> getVideoMetadata(AvesEntry entry) async {
-    final player = FijkPlayer();
-    final info = await player.setDataSourceUntilPrepared(entry.uri).then((v) {
-      return player.getInfo();
-    }).catchError((error) {
+    final path = entry.path;
+    if (path == null) {
+      debugPrint('failed to get video metadata for entry=$entry, path == null');
+      return {};
+    }
+    try {
+      final session = await FFprobeKit.getMediaInformation(path);
+      final info = session.getMediaInformation();
+      return info?.getAllProperties() ?? {};
+    } catch (error) {
       debugPrint('failed to get video metadata for entry=$entry, error=$error');
       return {};
-    });
-    await player.release();
-    return info;
+    }
   }
 
   static Future<Map<String, int>> getLoadingMetadata(AvesEntry entry) async {

@@ -8,13 +8,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "47.0.0"
-  _flutterfire_internals:
-    dependency: transitive
-    description:
-      name: _flutterfire_internals
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.0.12"
   analyzer:
     dependency: transitive
     description:
@@ -67,7 +60,7 @@ packages:
   aves_report_platform:
     dependency: "direct main"
     description:
-      path: "plugins/aves_report_crashlytics"
+      path: "plugins/aves_report_console"
       relative: true
     source: path
     version: "0.0.1"
@@ -81,7 +74,7 @@ packages:
   aves_services_platform:
     dependency: "direct main"
     description:
-      path: "plugins/aves_services_google"
+      path: "plugins/aves_services_none"
       relative: true
     source: path
     version: "0.0.1"
@@ -185,6 +178,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.0.2"
+  csslib:
+    dependency: transitive
+    description:
+      name: csslib
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.17.2"
   custom_rounded_rectangle_border:
     dependency: transitive
     description:
@@ -264,15 +264,20 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.1"
-  fijkplayer:
+  ffmpeg_kit_flutter:
     dependency: "direct main"
     description:
-      path: "."
-      ref: aves
-      resolved-ref: "69193da9a6b7f8b5cec5627253982adc303dbf46"
-      url: "https://github.com/deckerst/fijkplayer.git"
-    source: git
-    version: "0.10.0"
+      name: ffmpeg_kit_flutter
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "5.1.0"
+  ffmpeg_kit_flutter_platform_interface:
+    dependency: transitive
+    description:
+      name: ffmpeg_kit_flutter_platform_interface
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.2.1"
   file:
     dependency: transitive
     description:
@@ -280,41 +285,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "6.1.2"
-  firebase_core:
-    dependency: transitive
-    description:
-      name: firebase_core
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.4.1"
-  firebase_core_platform_interface:
-    dependency: transitive
-    description:
-      name: firebase_core_platform_interface
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "4.5.2"
-  firebase_core_web:
-    dependency: transitive
-    description:
-      name: firebase_core_web
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.1.0"
-  firebase_crashlytics:
-    dependency: transitive
-    description:
-      name: firebase_crashlytics
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "3.0.11"
-  firebase_crashlytics_platform_interface:
-    dependency: transitive
-    description:
-      name: firebase_crashlytics_platform_interface
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "3.3.11"
   flex_color_picker:
     dependency: "direct main"
     description:
@@ -393,13 +363,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.6.13"
-  flutter_plugin_android_lifecycle:
-    dependency: transitive
-    description:
-      name: flutter_plugin_android_lifecycle
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.0.7"
   flutter_staggered_animations:
     dependency: "direct main"
     description:
@@ -443,41 +406,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.0"
-  google_api_availability:
-    dependency: transitive
-    description:
-      name: google_api_availability
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "3.0.1"
-  google_maps_flutter:
-    dependency: transitive
-    description:
-      name: google_maps_flutter
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.2.3"
-  google_maps_flutter_android:
-    dependency: transitive
-    description:
-      name: google_maps_flutter_android
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.4.2"
-  google_maps_flutter_ios:
-    dependency: transitive
-    description:
-      name: google_maps_flutter_ios
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.1.13"
-  google_maps_flutter_platform_interface:
-    dependency: transitive
-    description:
-      name: google_maps_flutter_platform_interface
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.2.5"
   highlight:
     dependency: transitive
     description:
@@ -485,6 +413,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.7.0"
+  html:
+    dependency: transitive
+    description:
+      name: html
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.15.1"
   http:
     dependency: transitive
     description:
@@ -1033,13 +968,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.0"
-  stream_transform:
-    dependency: transitive
-    description:
-      name: stream_transform
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.1.0"
   streams_channel:
     dependency: "direct main"
     description:
@@ -1189,6 +1117,41 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.2"
+  video_player:
+    dependency: "direct main"
+    description:
+      name: video_player
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.5.1"
+  video_player_android:
+    dependency: transitive
+    description:
+      name: video_player_android
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.3.10"
+  video_player_avfoundation:
+    dependency: transitive
+    description:
+      name: video_player_avfoundation
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.3.8"
+  video_player_platform_interface:
+    dependency: transitive
+    description:
+      name: video_player_platform_interface
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "6.0.1"
+  video_player_web:
+    dependency: transitive
+    description:
+      name: video_player_web
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.13"
   vm_service:
     dependency: transitive
     description:

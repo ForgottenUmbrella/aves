@@ -5,7 +5,7 @@ import 'package:aves/model/settings/enums/enums.dart';
 import 'package:aves/model/settings/settings.dart';
 import 'package:aves/services/common/services.dart';
 import 'package:aves/widgets/viewer/video/controller.dart';
-import 'package:aves/widgets/viewer/video/fijkplayer.dart';
+import 'package:aves/widgets/viewer/video/video_player.dart';
 import 'package:collection/collection.dart';
 
 class VideoConductor {
@@ -32,7 +32,7 @@ class VideoConductor {
     if (controller != null) {
       _controllers.remove(controller);
     } else {
-      controller = IjkPlayerAvesVideoController(entry, persistPlayback: true);
+      controller = VideoPlayerAvesVideoController(entry, persistPlayback: true);
       _subscriptions.add(controller.statusStream.listen(_onControllerStatusChanged));
     }
     _controllers.insert(0, controller);

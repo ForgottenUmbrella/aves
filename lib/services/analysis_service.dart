@@ -10,7 +10,6 @@ import 'package:aves/model/source/media_store_source.dart';
 import 'package:aves/model/source/source_state.dart';
 import 'package:aves/services/common/services.dart';
 import 'package:aves/utils/android_file_utils.dart';
-import 'package:fijkplayer/fijkplayer.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
@@ -51,7 +50,6 @@ Future<void> _init() async {
   await device.init();
   await mobileServices.init();
   await settings.init(monitorPlatformSettings: false);
-  FijkLog.setLevel(FijkLogLevel.Warn);
   await reportService.init();
 
   final analyzer = Analyzer();
