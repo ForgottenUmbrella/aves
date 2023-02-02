@@ -5,6 +5,7 @@ class Dependencies {
   static const String bsd2 = 'BSD 2-Clause "Simplified" License';
   static const String bsd3 = 'BSD 3-Clause "Revised" License';
   static const String eclipse1 = 'Eclipse Public License 1.0';
+  static const String lgpl3 = 'GNU Lesser General Public License v3';
   static const String mit = 'MIT License';
 
   static const List<Dependency> androidDependencies = [
@@ -69,6 +70,11 @@ class Dependencies {
       name: 'Dynamic Color',
       license: bsd3,
       sourceUrl: 'https://github.com/material-foundation/material-dynamic-color-flutter',
+    ),
+    Dependency(
+      name: 'FFmpegKit',
+      license: lgpl3,
+      sourceUrl: 'https://github.com/arthenica/ffmpeg-kit',
     ),
     Dependency(
       name: 'Floating',
