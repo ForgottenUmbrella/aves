@@ -16,7 +16,6 @@ import 'package:aves/utils/file_utils.dart';
 import 'package:aves/utils/math_utils.dart';
 import 'package:aves/utils/string_utils.dart';
 import 'package:aves/utils/time_utils.dart';
-import 'package:aves/widgets/viewer/video/video_player.dart';
 import 'package:collection/collection.dart';
 import 'package:ffmpeg_kit_flutter/ffprobe_kit.dart';
 import 'package:flutter/foundation.dart';

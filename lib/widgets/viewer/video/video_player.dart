@@ -12,13 +12,12 @@ import 'package:collection/collection.dart';
 import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoPlayerAvesVideoController extends AvesVideoController {
-  /* wsrgs: No need to handle fijk-specific(?) plugin events? Audio focus? */
+  /* No need to handle plugin events. */
 
-  VideoPlayerController _instance;
+  final VideoPlayerController _instance;
   final List<StreamSubscription> _subscriptions = [];
   final StreamController<VideoPlayerValue> _valueStreamController = StreamController.broadcast();
   final StreamController<String?> _timedTextStreamController = StreamController.broadcast();
@@ -57,8 +56,8 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
 
   Stream<VideoPlayerValue> get _valueStream => _valueStreamController.stream;
 
-  /* No need to disable hardware acceleration for short videos. */
-  static const captureFrameEnabled = true;
+  /* No need to disable hardware acceleration for short videos.
+   * (In fact, we can't.) */
   // wsrgs: Intentional break from compatibility, because I prefer it this way.
   static final options = VideoPlayerOptions(mixWithOthers: true);
 
@@ -74,7 +73,7 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
           persistPlayback: persistPlayback,
        ) {
     _valueStream.map((value) => value.isInitialized).any((v) => v).then((_) {
-      canCaptureFrameNotifier.value = captureFrameEnabled;
+      canCaptureFrameNotifier.value = true;
       canMuteNotifier.value = true;
       canSetSpeedNotifier.value = true;
     });
@@ -93,12 +92,16 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
   void _startListening() {
     _instance.addListener(_onValueChanged);
     _subscriptions.add(_valueStream
+        // The notifier must only fire when not looping, else the video will
+        //manually seek to zero, which isn't seamless.
         .where((value) => value.position > value.duration && !_instance.value.isLooping)
         .listen((_) => _completedNotifier.notify()));
-    /* No need to manually implement CC. Closed captions support is built-in. */
+    /* No need to manually implement CC. Closed captions support is built-in.
+     * (Except for the fact that track support is missing so actually we have
+     * no CC support.) */
     _subscriptions.add(settings.updateStream
         .where((event) => event.key == Settings.videoLoopModeKey)
-        .listen((_) => _instance.setLooping(settings.videoLoopMode.shouldLoop(entry))));
+        .listen((_) => _applyOptions()));
   }
 
   void _stopListening() {
@@ -122,10 +125,12 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
     await play();
   }
 
-  Future<void> _applyOptions(int startMillis) async {
+  Future<void> _applyOptions([int? startMillis = null]) async {
     final loopEnabled = settings.videoLoopMode.shouldLoop(entry);
     await _instance.setLooping(loopEnabled);
-    await seekTo(startMillis);
+    if (startMillis != null) {
+      await seekTo(startMillis);
+    }
   }
 
   void _fetchStreams() async {
@@ -262,7 +267,7 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
     _speed = speed;
     _speedStreamController.add(_speed);
 
-    /* No need for SoundTouch handling. */
+    /* No need to handle SoundTouch. */
     _applySpeed();
   }
 
@@ -270,12 +275,12 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
 
   @override
   Future<void> selectStream(StreamType type, StreamSummary? selected) async {
-    debugPrint('wsrgs: XXX: selectStream not implemented');
+    debugPrint('XXX: selectStream not implemented');
   }
 
   @override
   Future<StreamSummary?> getSelectedStream(StreamType type) async {
-    debugPrint('wsrgs: XXX: getSelectedStream not implemented');
+    debugPrint('XXX: getSelectedStream not implemented');
     return null;
   }
 
@@ -284,11 +289,11 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
 
   @override
   Future<Uint8List> captureFrame() async {
-    // wsrgs: XXX: Frame-perfect captures require https://github.com/flutter/flutter/issues/38509
+    // XXX: Frame-perfect captures require https://github.com/flutter/flutter/issues/38509
     final position = _instance.value.position;
     final tempDir = await Directory.systemTemp.createTemp();
-    final outPath = "$tempDir/frame.jpeg";
-    await FFmpegKit.execute("-i ${entry.path!} -ss $position -frames:v 1 $outPath");
+    final outPath = '$tempDir/frame.jpeg';
+    await FFmpegKit.execute('-i ${entry.path!} -ss $position -frames:v 1 $outPath');
     final outFile = File(outPath);
     final bytes = await outFile.readAsBytes();
     await tempDir.delete(recursive: true);
