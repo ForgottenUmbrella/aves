@@ -31,12 +31,14 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
   double _speed = 1;
   double _volume = 1;
 
-  // Copying the fijkplayer.dart implementation for feature parity.
+  // Actual min is zero exclusive.
+  // No one could want it to go slower than .25, right?
   @override
-  final double minSpeed = .5;
+  final double minSpeed = .25;
 
+  // Actual max is non-existent. Copying VLC's max.
   @override
-  final double maxSpeed = 2;
+  final double maxSpeed = 4;
 
   // Don't need to wait for it to load since we use FFmpeg separately.
   @override
