@@ -174,7 +174,8 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
       }
     });
 
-    canSelectStreamNotifier.value = videoStreamCount > 1 || audioStreamCount > 1 || textStreamCount > 0;
+    // XXX: Stream support not implemented.
+    // canSelectStreamNotifier.value = videoStreamCount > 1 || audioStreamCount > 1 || textStreamCount > 0;
 
     final selectedVideo = await getSelectedStream(StreamType.video);
     if (selectedVideo != null) {
