@@ -211,9 +211,15 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
   @override
   Future<void> pause() => _instance.pause();
 
-  // wsrgs: Do we need the uninitialised player seek workaround?
   @override
-  Future<void> seekTo(int targetMillis) => _instance.seekTo(Duration(milliseconds: targetMillis));
+  Future<void> seekTo(int targetMillis) async {
+    if (isReady) {
+      await _instance.seekTo(Duration(milliseconds: targetMillis));
+    } else {
+      // Load and seek the player if resuming playback.
+      await _init(startMillis: targetMillis);
+    }
+  }
 
   @override
   Listenable get playCompletedListenable => _completedNotifier;
