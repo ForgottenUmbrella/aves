@@ -16,7 +16,9 @@ import 'package:flutter/services.dart';
 class IjkPlayerAvesVideoController extends AvesVideoController {
   final EventChannel _eventChannel = const OptionalEventChannel('befovy.com/fijk/event');
 
-  late FijkPlayer _instance;
+  FijkPlayer _instance = FijkPlayer();
+  // Secondary instance to switch to immediately on completion for seamless looping.
+  FijkPlayer _inactiveInstance = FijkPlayer();
   final List<StreamSubscription> _subscriptions = [];
   final StreamController<FijkValue> _valueStreamController = StreamController.broadcast();
   final StreamController<String?> _timedTextStreamController = StreamController.broadcast();
@@ -56,6 +58,8 @@ class IjkPlayerAvesVideoController extends AvesVideoController {
 
   Stream<FijkValue> get _valueStream => _valueStreamController.stream;
 
+  bool loopEnabled() => settings.videoLoopMode.shouldLoop(entry);
+
   static const initialPlayDelay = Duration(milliseconds: 100);
   static const gifLikeVideoDurationThreshold = Duration(seconds: 10);
   static const gifLikeBitRateThreshold = 2 << 18; // 512kB/s (4Mb/s)
@@ -68,7 +72,6 @@ class IjkPlayerAvesVideoController extends AvesVideoController {
           entry,
           persistPlayback: persistPlayback,
         ) {
-    _instance = FijkPlayer();
     _valueStream.map((value) => value.videoRenderStart).firstWhere((v) => v, orElse: () => false).then(
       (started) {
         canCaptureFrameNotifier.value = captureFrameEnabled && started;
@@ -93,19 +96,27 @@ class IjkPlayerAvesVideoController extends AvesVideoController {
     await _valueStreamController.close();
     await _timedTextStreamController.close();
     await _instance.release();
+    await _inactiveInstance.release();
   }
 
   void _startListening() {
     _instance.addListener(_onValueChanged);
     _subscriptions.add(_eventChannel.receiveBroadcastStream().listen((event) => _onPluginEvent(event as Map?)));
-    _subscriptions.add(_valueStream.where((value) => value.state == FijkState.completed).listen((_) => _completedNotifier.notify()));
+    _subscriptions.add(_valueStream
+        // If looping, then the completed state should not be broadcast,
+        // otherwise the video view would manually seek to zero, preventing
+        // seamless playback.
+        .where((value) => value.state == FijkState.completed && !loopEnabled())
+        .listen((_) {
+          debugPrint('wsrgs: $_instance completed?!');
+          _completedNotifier.notify();
+        }));
     _subscriptions.add(_instance.onTimedText.listen(_timedTextStreamController.add));
     _subscriptions.add(settings.updateStream
         .where((event) => {
               Settings.enableVideoHardwareAccelerationKey,
-              Settings.videoLoopModeKey,
             }.contains(event.key))
-        .listen((_) => _instance.reset()));
+        .listen((_) => _instance.reset().then((_) => debugPrint('wsrgs: $_instance reset?!'))));
   }
 
   void _stopListening() {
@@ -117,10 +128,12 @@ class IjkPlayerAvesVideoController extends AvesVideoController {
 
   Future<void> _init({int startMillis = 0}) async {
     if (isReady) {
+      debugPrint('wsrgs: $_instance re-init?!');
       _stopListening();
       await _instance.release();
       _instance = FijkPlayer();
       _startListening();
+      debugPrint('wsrgs: (re-init) now instance=$_instance');
     }
 
     sarNotifier.value = 1;
@@ -168,8 +181,6 @@ class IjkPlayerAvesVideoController extends AvesVideoController {
       _macroBlockCrop = Offset(s.width, s.height);
     }
 
-    final loopEnabled = settings.videoLoopMode.shouldLoop(entry);
-
     // `fastseek`: enable fast, but inaccurate seeks for some formats
     // in practice the flag seems ineffective, but harmless too
     options.setFormatOption('fflags', 'fastseek');
@@ -206,10 +217,6 @@ class IjkPlayerAvesVideoController extends AvesVideoController {
     // `framedrop`: drop frames when cpu is too slow
     // default: 0, in [-1, 120]
     options.setPlayerOption('framedrop', 5);
-
-    // `loop`: set number of times the playback shall be looped
-    // default: 1, in [INT_MIN, INT_MAX]
-    options.setPlayerOption('loop', loopEnabled ? -1 : 1);
 
     // `mediacodec-all-videos`: MediaCodec: enable all videos
     // default: 0, in [0, 1]
@@ -331,6 +338,36 @@ class IjkPlayerAvesVideoController extends AvesVideoController {
       _fetchStreams();
     }
     _valueStreamController.add(_instance.value);
+
+    // If looping, swap instances for seamless transition.
+    if (_instance.state == FijkState.completed && loopEnabled()) {
+      debugPrint('wsrgs: loop! swapping from $_instance to $_inactiveInstance...');
+      _stopListening();
+      final temp = _instance;
+      _instance = _inactiveInstance;
+      _inactiveInstance = temp;
+      _startListening();
+      _inactiveInstance.seekTo(0);
+      play();
+      // XXX: First playback works. Second playback works. Third, fifth,
+      // seventh, etc. plays with video frozen at frame zero (audio works),
+      // while fourth, sixth, eighth, etc. works with video.
+      //
+      // Actually, the frozen frame depends on whether I call seek or not.
+      // If I call seek, then the video freezes at that frame.
+      // If I don't, it freezes at the last frame.
+      //
+      // Further inspection with an MVP reveals that this is some (F)ijk
+      // bullshit related to the surface not being set properly; if the surface
+      // is somehow null, then only audio will play. The state becomes
+      // de-synced, simultaneously playing while thinking of itself as paused;
+      // the controls show the video is paused, and tapping the play button
+      // indeed plays the video, but it will swap to the other instance when
+      // the audio finishes, regardless of video state.
+      //
+      // Conclusion: this experiment is a failure. ExoPlayer/video_player is
+      // the way to go.
+    }
   }
 
   @override
@@ -446,9 +483,13 @@ class IjkPlayerAvesVideoController extends AvesVideoController {
         final newIndex = selected.index;
         if (newIndex != null) {
           await _instance.selectTrack(newIndex);
+          // Stream selection is not preserved by _init calls, so we need to
+          // keep the two instances in sync explicitly here.
+          await _inactiveInstance.selectTrack(newIndex);
         }
       } else if (current != null) {
         await _instance.deselectTrack(current.index!);
+        await _inactiveInstance.deselectTrack(current.index!);
       }
       if (type == StreamType.text) {
         _timedTextStreamController.add(null);
@@ -479,6 +520,7 @@ class IjkPlayerAvesVideoController extends AvesVideoController {
     return ValueListenableBuilder<double>(
         valueListenable: sarNotifier,
         builder: (context, sar, child) {
+          debugPrint('wsrgs: rebuilding widget! instance=$_instance');
           // derive DAR (Display Aspect Ratio) from SAR (Storage Aspect Ratio), if any
           // e.g. 960x536 (~16:9) with SAR 4:3 should be displayed as ~2.39:1
           final dar = entry.displayAspectRatio * sar;
