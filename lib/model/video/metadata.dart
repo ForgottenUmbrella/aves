@@ -50,14 +50,16 @@ class VideoMetadataFormatter {
       debugPrint('failed to get video metadata for entry=$entry, path == null');
       return {};
     }
+
+    var info = {};
     try {
       final session = await FFprobeKit.getMediaInformation(path);
-      final info = session.getMediaInformation();
-      return info?.getAllProperties() ?? {};
+      info = session.getMediaInformation()?.getAllProperties() ?? {};
     } catch (error) {
       debugPrint('failed to get video metadata for entry=$entry, error=$error');
       return {};
     }
+    return _fijkTransform(info);
   }
 
   static Future<Map<String, int>> getLoadingMetadata(AvesEntry entry) async {
@@ -363,7 +365,8 @@ class VideoMetadataFormatter {
 
   static String _formatBrand(String value) => Mp4.brands[value] ?? value;
 
-  static String _formatChannelLayout(value) => ChannelLayouts.names[value] ?? 'unknown ($value)';
+  static String _formatChannelLayout(value) => ChannelLayouts.names[value]
+    ?? (value is String ? value : 'unknown ($value)');
 
   static String _formatCodecName(String value) => _codecNames[value] ?? value.toUpperCase().replaceAll('_', ' ');
 
@@ -428,4 +431,77 @@ class VideoMetadataFormatter {
     if (size < divider * divider) return '${(size / divider).toStringAsFixed(round)} K$unit';
     return '${(size / divider / divider).toStringAsFixed(round)} M$unit';
   }
+
+  // Transform the FFProbeKit info map into the format expected upstream.
+  //
+  // TODO: Missing keys:
+  // - Keys.androidVersion
+  // - Keys.date
+  // - Keys.filename
+  // - Keys.location
+  // - Keys.mediaType
+  // - Keys.sarDen
+  // - Keys.sarNum
+  // - Keys.sourceOsHash
+  // - Keys.statisticsWritingApp
+  // - Keys.statisticsWritingDateUtc
+  // - Keys.title
+  // - Keys.track
+  static Map _fijkTransform(Map info) => {
+    Keys.androidCaptureFramerate:
+      info['format']?['tags']?['com.android.capture.fps'],
+    Keys.bitrate: info['format']?['bit_rate'],
+    Keys.byteCount: info['format']?['size'],
+    Keys.compatibleBrands: info['format']?['tags']?['compatible_brands'],
+    Keys.creationTime: info['format']?['tags']?['creation_time'],
+    Keys.durationMicros:
+      _apply(double.parse, info['format']?['duration'] as String?)
+        ?.times(1e6)?.round(),
+    Keys.majorBrand: info['format']?['tags']?['major_brand'],
+    Keys.mediaFormat: info['format']?['format_name'],
+    Keys.minorVersion: info['format']?['minor_version'],
+    Keys.startMicros:
+      _apply(double.parse, info['format']?['start_time'] as String?)
+        ?.times(1e6)?.round(),
+    Keys.streams: info['streams']
+      ?.map((stream) => {
+        Keys.bitrate: stream['bit_rate'],
+        // TODO: Convert these into numbers to then be re-converted to strings?
+        Keys.channelLayout: [stream['channel_layout'], stream['channels']]
+          .where((x) => x != null)
+          .join(' ')
+          .replaceEmpty(null),
+        Keys.codecLevel: stream['level']?.toString(),
+        Keys.codecName: stream['codec_name'],
+        Keys.codecPixelFormat: stream['pix_fmt'],
+        Keys.codecProfileId: stream['profile'],
+        Keys.creationTime: stream['tags']?['creation_time'],
+        ...Map.fromIterables(
+          [Keys.fpsNum, Keys.fpsDen],
+          stream['avg_frame_rate']?.split('/')?.map(int.parse) ?? [null, null]
+        )..removeWhere((k, v) => v == 0),
+        Keys.frameCount: stream['nb_frames'],
+        Keys.handlerName: stream['tags']?['handler_name'],
+        Keys.height: stream['height'],
+        Keys.index: stream['index'],
+        Keys.language: stream['tags']?['language'],
+        Keys.rotate:
+          (stream['side_data_list']?.first?['rotation'] as int?)?.times(-1),
+        Keys.sampleRate: stream['sample_rate'],
+        Keys.streamType: stream['codec_type'],
+        Keys.width: stream['width'],
+      }..removeWhere(_valueIsNull)).toList(),
+  }..removeWhere(_valueIsNull);
+}
+
+bool _valueIsNull(k, v) => v == null;
+
+R? _apply<R, T>(R Function(T) f, T? arg) => arg != null ? f(arg) : null;
+
+extension _Operator on num {
+  num times(num other) => this * other;
+}
+
+extension _ReplaceEmpty on String {
+  String? replaceEmpty(String? replace) => this.isEmpty ? replace : this;
 }
