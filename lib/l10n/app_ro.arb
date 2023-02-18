@@ -152,8 +152,8 @@
   "@videoActionSkip10": {},
   "videoActionSelectStreams": "Selectați piese",
   "@videoActionSelectStreams": {},
-  "videoActionSettings": "Setări",
-  "@videoActionSettings": {},
+  "viewerActionSettings": "Setări",
+  "@viewerActionSettings": {},
   "slideshowActionResume": "Reluare",
   "@slideshowActionResume": {},
   "slideshowActionShowInCollection": "Afișați în colecție",
@@ -743,8 +743,6 @@
   "@sortByRating": {},
   "viewerInfoLabelUri": "URI",
   "@viewerInfoLabelUri": {},
-  "createAlbumTooltip": "Creați un album",
-  "@createAlbumTooltip": {},
   "viewerInfoLabelDescription": "Descriere",
   "@viewerInfoLabelDescription": {},
   "settingsThumbnailOverlayPageTitle": "Suprapunere",
@@ -1366,5 +1364,7 @@
   "settingsDisplayUseTvInterface": "Interfață Android TV",
   "@settingsDisplayUseTvInterface": {},
   "tooManyItemsErrorDialogMessage": "Încearcă din nou cu mai puține elemente.",
-  "@tooManyItemsErrorDialogMessage": {}
+  "@tooManyItemsErrorDialogMessage": {},
+  "settingsVideoGestureVerticalDragBrightnessVolume": "Glisați în sus sau în jos pentru a regla luminozitatea/volumul",
+  "@settingsVideoGestureVerticalDragBrightnessVolume": {}
 }
