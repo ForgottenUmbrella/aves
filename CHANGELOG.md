@@ -26,6 +26,26 @@ All notable changes to this project will be documented in this file.
 - copying to SD card in some cases
 - sharing SD card files referred by `file` URI
 
+## <a id="v1.7.10+loop"></a>[v1.7.10+loop] - 2023-02-18
+
+### Added
+
+- Video: loop without gaps
+
+### Changed
+
+- Video: allow mixing audio with other media sources
+- Video: increase maximum and minimum playback speed
+- Video: capture frames in a possibly inferior manner
+- Info: gather video metadata from another source - please report missing data!
+- increase minimum supported Android version to Android 7 (API level 24)
+
+### Removed
+
+- Video: remove support for non-native codecs
+- Video: remove ability to change/enable audio/video/subtitle track
+- Video: ignore hardware acceleration setting
+
 ## <a id="v1.7.10"></a>[v1.7.10] - 2023-01-18
 
 ### Added
