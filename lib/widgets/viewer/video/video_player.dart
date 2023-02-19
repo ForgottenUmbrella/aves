@@ -74,7 +74,7 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
           entry,
           persistPlayback: persistPlayback,
        ) {
-    _valueStream.map((value) => value.isInitialized).any((v) => v).then((_) {
+    _valueStream.any((value) => value.isInitialized).then((_) {
       canCaptureFrameNotifier.value = true;
       canMuteNotifier.value = true;
       canSetSpeedNotifier.value = true;
@@ -95,7 +95,7 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
     _instance.addListener(_onValueChanged);
     _subscriptions.add(_valueStream
         // The notifier must only fire when not looping, else the video will
-        //manually seek to zero, which isn't seamless.
+        // manually seek to zero, which isn't seamless.
         .where((value) => value.position > value.duration && !_instance.value.isLooping)
         .listen((_) => _completedNotifier.notify()));
     /* No need to manually implement CC. Closed captions support is built-in.
