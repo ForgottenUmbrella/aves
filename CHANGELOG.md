@@ -6,6 +6,23 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Export: bulk converting
+- Export: write metadata when converting
+- Places: page & navigation entry
+
+### Changed
+
+- upgraded Flutter to stable v3.7.5
+
+### Fixed
+
+- replacing when moving item to vault
+- exporting item to vault
+
+## <a id="v1.8.1"></a>[v1.8.1] - 2023-02-21
+
+### Added
+
 - Vaults
 - Viewer: overlay details expand/collapse on tap
 - Viewer: export actions available as quick actions
@@ -45,6 +62,8 @@ All notable changes to this project will be documented in this file.
 - Video: remove support for non-native codecs
 - Video: remove ability to change/enable audio/video/subtitle track
 - Video: ignore hardware acceleration setting
+
+## <a id="v1.8.0"></a>[v1.8.0] - 2023-02-20 [YANKED]
 
 ## <a id="v1.7.10"></a>[v1.7.10] - 2023-01-18
 
