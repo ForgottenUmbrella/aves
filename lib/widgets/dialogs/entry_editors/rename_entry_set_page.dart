@@ -1,13 +1,14 @@
 import 'dart:math';
 
-import 'package:aves/model/entry.dart';
+import 'package:aves/model/entry/entry.dart';
 import 'package:aves/model/naming_pattern.dart';
 import 'package:aves/model/settings/settings.dart';
 import 'package:aves/theme/durations.dart';
 import 'package:aves/theme/icons.dart';
 import 'package:aves/utils/constants.dart';
 import 'package:aves/widgets/collection/collection_grid.dart';
-import 'package:aves/widgets/common/basic/menu.dart';
+import 'package:aves/widgets/common/basic/font_size_icon_theme.dart';
+import 'package:aves/widgets/common/basic/popup/menu_row.dart';
 import 'package:aves/widgets/common/basic/scaffold.dart';
 import 'package:aves/widgets/common/extensions/build_context.dart';
 import 'package:aves/widgets/common/grid/theme.dart';
@@ -81,7 +82,7 @@ class _RenameEntrySetPageState extends State<RenameEntrySetPage> {
                       autofocus: true,
                     ),
                   ),
-                  MenuIconTheme(
+                  FontSizeIconTheme(
                     child: PopupMenuButton<String>(
                       itemBuilder: (context) {
                         return [

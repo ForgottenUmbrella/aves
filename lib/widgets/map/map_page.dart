@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:aves/app_mode.dart';
 import 'package:aves/model/actions/map_actions.dart';
 import 'package:aves/model/actions/map_cluster_actions.dart';
-import 'package:aves/model/entry.dart';
+import 'package:aves/model/entry/entry.dart';
+import 'package:aves/model/entry/extensions/location.dart';
 import 'package:aves/model/filters/coordinate.dart';
 import 'package:aves/model/filters/filters.dart';
 import 'package:aves/model/geotiff.dart';
@@ -17,8 +18,9 @@ import 'package:aves/theme/icons.dart';
 import 'package:aves/utils/debouncer.dart';
 import 'package:aves/widgets/collection/collection_page.dart';
 import 'package:aves/widgets/collection/entry_set_action_delegate.dart';
+import 'package:aves/widgets/common/basic/font_size_icon_theme.dart';
 import 'package:aves/widgets/common/basic/insets.dart';
-import 'package:aves/widgets/common/basic/menu.dart';
+import 'package:aves/widgets/common/basic/popup/menu_row.dart';
 import 'package:aves/widgets/common/basic/scaffold.dart';
 import 'package:aves/widgets/common/behaviour/routes.dart';
 import 'package:aves/widgets/common/extensions/build_context.dart';
@@ -31,8 +33,8 @@ import 'package:aves/widgets/common/providers/map_theme_provider.dart';
 import 'package:aves/widgets/common/thumbnail/scroller.dart';
 import 'package:aves/widgets/filter_grids/common/action_delegates/chip.dart';
 import 'package:aves/widgets/map/map_info_row.dart';
+import 'package:aves/widgets/viewer/controls/notifications.dart';
 import 'package:aves/widgets/viewer/entry_viewer_page.dart';
-import 'package:aves/widgets/viewer/notifications.dart';
 import 'package:aves_map/aves_map.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -566,7 +568,7 @@ class _ContentState extends State<_Content> with SingleTickerProviderStateMixin 
   PopupMenuItem<MapClusterAction> _buildMenuItem(MapClusterAction action) {
     return PopupMenuItem(
       value: action,
-      child: MenuIconTheme(
+      child: FontSizeIconTheme(
         child: MenuRow(
           text: action.getText(context),
           icon: action.getIcon(),

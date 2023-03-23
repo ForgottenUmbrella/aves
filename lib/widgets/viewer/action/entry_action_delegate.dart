@@ -6,8 +6,12 @@ import 'package:aves/model/actions/entry_actions.dart';
 import 'package:aves/model/actions/move_type.dart';
 import 'package:aves/model/actions/share_actions.dart';
 import 'package:aves/model/device.dart';
-import 'package:aves/model/entry.dart';
-import 'package:aves/model/entry_metadata_edition.dart';
+import 'package:aves/model/entry/entry.dart';
+import 'package:aves/model/entry/extensions/favourites.dart';
+import 'package:aves/model/entry/extensions/location.dart';
+import 'package:aves/model/entry/extensions/metadata_edition.dart';
+import 'package:aves/model/entry/extensions/multipage.dart';
+import 'package:aves/model/entry/extensions/props.dart';
 import 'package:aves/model/filters/filters.dart';
 import 'package:aves/model/settings/enums/enums.dart';
 import 'package:aves/model/settings/settings.dart';
@@ -29,9 +33,9 @@ import 'package:aves/widgets/dialogs/entry_editors/rename_entry_dialog.dart';
 import 'package:aves/widgets/viewer/action/entry_info_action_delegate.dart';
 import 'package:aves/widgets/viewer/action/printer.dart';
 import 'package:aves/widgets/viewer/action/single_entry_editor.dart';
+import 'package:aves/widgets/viewer/controls/notifications.dart';
 import 'package:aves/widgets/viewer/debug/debug_page.dart';
 import 'package:aves/widgets/viewer/multipage/conductor.dart';
-import 'package:aves/widgets/viewer/notifications.dart';
 import 'package:aves/widgets/viewer/source_viewer_page.dart';
 import 'package:aves/widgets/viewer/video/conductor.dart';
 import 'package:flutter/foundation.dart';
@@ -47,7 +51,10 @@ class EntryActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAwareMix
 
   EntryActionDelegate(this.mainEntry, this.pageEntry, this.collection);
 
-  bool isVisible(EntryAction action) {
+  bool isVisible({
+    required AppMode appMode,
+    required EntryAction action,
+  }) {
     if (mainEntry.trashed) {
       switch (action) {
         case EntryAction.delete:
@@ -60,7 +67,7 @@ class EntryActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAwareMix
       }
     } else {
       final targetEntry = EntryActions.pageActions.contains(action) ? pageEntry : mainEntry;
-      final canWrite = !settings.isReadOnly;
+      final canWrite = appMode.canEditEntry && !settings.isReadOnly;
       switch (action) {
         case EntryAction.toggleFavourite:
           return collection != null;
@@ -120,7 +127,11 @@ class EntryActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAwareMix
         case EntryAction.showGeoTiffOnMap:
         case EntryAction.convertMotionPhotoToStillImage:
         case EntryAction.viewMotionPhotoVideo:
-          return _metadataActionDelegate.isVisible(targetEntry, action);
+          return _metadataActionDelegate.isVisible(
+            appMode: appMode,
+            targetEntry: targetEntry,
+            action: action,
+          );
         case EntryAction.debug:
           return kDebugMode;
       }
@@ -236,7 +247,11 @@ class EntryActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAwareMix
       case EntryAction.openVideo:
         final controller = context.read<VideoConductor>().getController(targetEntry);
         if (controller != null) {
-          VideoActionNotification(controller: controller, action: action).dispatch(context);
+          VideoActionNotification(
+            controller: controller,
+            entry: targetEntry,
+            action: action,
+          ).dispatch(context);
         }
         break;
       case EntryAction.edit:

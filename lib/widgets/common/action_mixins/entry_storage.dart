@@ -3,7 +3,9 @@ import 'dart:io';
 
 import 'package:aves/app_mode.dart';
 import 'package:aves/model/actions/move_type.dart';
-import 'package:aves/model/entry.dart';
+import 'package:aves/model/entry/entry.dart';
+import 'package:aves/model/entry/extensions/multipage.dart';
+import 'package:aves/model/entry/extensions/props.dart';
 import 'package:aves/model/filters/album.dart';
 import 'package:aves/model/filters/trash.dart';
 import 'package:aves/model/highlight.dart';
@@ -27,10 +29,10 @@ import 'package:aves/widgets/common/action_mixins/permission_aware.dart';
 import 'package:aves/widgets/common/action_mixins/size_aware.dart';
 import 'package:aves/widgets/common/extensions/build_context.dart';
 import 'package:aves/widgets/dialogs/aves_confirmation_dialog.dart';
-import 'package:aves/widgets/dialogs/aves_selection_dialog.dart';
 import 'package:aves/widgets/dialogs/convert_entry_dialog.dart';
 import 'package:aves/widgets/dialogs/pick_dialogs/album_pick_page.dart';
-import 'package:aves/widgets/viewer/notifications.dart';
+import 'package:aves/widgets/dialogs/selection_dialogs/single_selection.dart';
+import 'package:aves/widgets/viewer/controls/notifications.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -170,13 +172,13 @@ mixin EntryStorageMixin on FeedbackMixin, PermissionAwareMixin, SizeAwareMixin {
       if (uniqueNames.length < names.length) {
         final value = await showDialog<NameConflictStrategy>(
           context: context,
-          builder: (context) => AvesSelectionDialog<NameConflictStrategy>(
+          builder: (context) => AvesSingleSelectionDialog<NameConflictStrategy>(
             initialValue: nameConflictStrategy,
             options: Map.fromEntries(NameConflictStrategy.values.map((v) => MapEntry(v, v.getName(context)))),
             message: originAlbums.length == 1 ? l10n.nameConflictDialogSingleSourceMessage : l10n.nameConflictDialogMultipleSourceMessage,
             confirmationButtonLabel: l10n.continueButtonLabel,
           ),
-          routeSettings: const RouteSettings(name: AvesSelectionDialog.routeName),
+          routeSettings: const RouteSettings(name: AvesSingleSelectionDialog.routeName),
         );
         if (value == null) return;
         nameConflictStrategy = value;

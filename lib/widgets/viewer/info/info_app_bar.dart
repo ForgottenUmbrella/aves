@@ -1,12 +1,16 @@
+import 'package:aves/app_mode.dart';
 import 'package:aves/model/actions/entry_actions.dart';
-import 'package:aves/model/entry.dart';
+import 'package:aves/model/entry/entry.dart';
+import 'package:aves/model/entry/extensions/props.dart';
+import 'package:aves/model/selection.dart';
 import 'package:aves/model/settings/settings.dart';
 import 'package:aves/model/source/collection_lens.dart';
 import 'package:aves/theme/durations.dart';
 import 'package:aves/theme/icons.dart';
 import 'package:aves/widgets/common/app_bar/app_bar_title.dart';
 import 'package:aves/widgets/common/app_bar/sliver_app_bar_title.dart';
-import 'package:aves/widgets/common/basic/menu.dart';
+import 'package:aves/widgets/common/basic/font_size_icon_theme.dart';
+import 'package:aves/widgets/common/basic/popup/menu_row.dart';
 import 'package:aves/widgets/common/extensions/build_context.dart';
 import 'package:aves/widgets/viewer/action/entry_info_action_delegate.dart';
 import 'package:aves/widgets/viewer/info/info_search.dart';
@@ -14,6 +18,7 @@ import 'package:aves/widgets/viewer/info/metadata/metadata_dir.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:provider/provider.dart';
 
 class InfoAppBar extends StatelessWidget {
   final AvesEntry entry;
@@ -33,18 +38,26 @@ class InfoAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final commonActions = EntryActions.commonMetadataActions.where((v) => actionDelegate.isVisible(entry, v));
-    final formatSpecificActions = EntryActions.formatSpecificMetadataActions.where((v) => actionDelegate.isVisible(entry, v));
+    final appMode = context.watch<ValueNotifier<AppMode>>().value;
+    bool isVisible(EntryAction action) => actionDelegate.isVisible(
+          appMode: appMode,
+          targetEntry: entry,
+          action: action,
+        );
+    final commonActions = EntryActions.commonMetadataActions.where(isVisible);
+    final formatSpecificActions = EntryActions.formatSpecificMetadataActions.where(isVisible);
     final useTvLayout = settings.useTvLayout;
     return SliverAppBar(
       leading: useTvLayout
           ? null
-          : IconButton(
-              // key is expected by test driver
-              key: const Key('back-button'),
-              icon: const Icon(AIcons.goUp),
-              onPressed: onBackPressed,
-              tooltip: context.l10n.viewerInfoBackToViewerTooltip,
+          : FontSizeIconTheme(
+              child: IconButton(
+                // key is expected by test driver
+                key: const Key('back-button'),
+                icon: const Icon(AIcons.goUp),
+                onPressed: onBackPressed,
+                tooltip: context.l10n.viewerInfoBackToViewerTooltip,
+              ),
             ),
       automaticallyImplyLeading: false,
       title: SliverAppBarTitleWrapper(
@@ -62,27 +75,25 @@ class InfoAppBar extends StatelessWidget {
                 tooltip: MaterialLocalizations.of(context).searchFieldLabel,
               ),
               if (entry.canEdit)
-                MenuIconTheme(
-                  child: PopupMenuButton<EntryAction>(
-                    itemBuilder: (context) => [
-                      ...commonActions.map((action) => _toMenuItem(context, action, enabled: actionDelegate.canApply(entry, action))),
-                      if (formatSpecificActions.isNotEmpty) ...[
-                        const PopupMenuDivider(),
-                        ...formatSpecificActions.map((action) => _toMenuItem(context, action, enabled: actionDelegate.canApply(entry, action))),
-                      ],
-                      if (!kReleaseMode) ...[
-                        const PopupMenuDivider(),
-                        _toMenuItem(context, EntryAction.debug, enabled: true),
-                      ]
+                PopupMenuButton<EntryAction>(
+                  itemBuilder: (context) => [
+                    ...commonActions.map((action) => _toMenuItem(context, action, enabled: actionDelegate.canApply(entry, action))),
+                    if (formatSpecificActions.isNotEmpty) ...[
+                      const PopupMenuDivider(),
+                      ...formatSpecificActions.map((action) => _toMenuItem(context, action, enabled: actionDelegate.canApply(entry, action))),
                     ],
-                    onSelected: (action) async {
-                      // wait for the popup menu to hide before proceeding with the action
-                      await Future.delayed(Durations.popupMenuAnimation * timeDilation);
-                      actionDelegate.onActionSelected(context, entry, collection, action);
-                    },
-                  ),
+                    if (!kReleaseMode) ...[
+                      const PopupMenuDivider(),
+                      _toMenuItem(context, EntryAction.debug, enabled: true),
+                    ]
+                  ],
+                  onSelected: (action) async {
+                    // wait for the popup menu to hide before proceeding with the action
+                    await Future.delayed(Durations.popupMenuAnimation * timeDilation);
+                    actionDelegate.onActionSelected(context, entry, collection, action);
+                  },
                 ),
-            ],
+            ].map((v) => FontSizeIconTheme(child: v)).toList(),
       floating: true,
     );
   }
@@ -96,12 +107,14 @@ class InfoAppBar extends StatelessWidget {
   }
 
   void _goToSearch(BuildContext context) {
+    final isSelecting = context.read<Selection<AvesEntry>?>()?.isSelecting ?? false;
     showSearch(
       context: context,
       delegate: InfoSearchDelegate(
         searchFieldLabel: context.l10n.viewerInfoSearchFieldLabel,
         entry: entry,
         metadataNotifier: metadataNotifier,
+        isSelecting: isSelecting,
       ),
     );
   }

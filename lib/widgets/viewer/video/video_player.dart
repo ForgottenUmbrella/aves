@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:aves/model/entry.dart';
+import 'package:aves/model/entry/extensions/props.dart';
 import 'package:aves/model/settings/enums/video_loop_mode.dart';
 import 'package:aves/model/settings/settings.dart';
 import 'package:aves/model/video/keys.dart';
 import 'package:aves/model/video/metadata.dart';
 import 'package:aves/utils/change_notifier.dart';
-import 'package:aves/widgets/viewer/video/controller.dart';
+import 'package:aves_video/aves_video.dart';
 import 'package:collection/collection.dart';
 import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
 import 'package:flutter/foundation.dart';
@@ -64,15 +64,11 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
   static final options = VideoPlayerOptions(mixWithOthers: true);
 
   VideoPlayerAvesVideoController(
-    AvesEntry entry, {
-    required bool persistPlayback,
+    super.entry, {
+    required super.playbackStateHandler,
   }) : _instance = VideoPlayerController.contentUri(
           Uri.parse(entry.uri),
           videoPlayerOptions: options,
-       ),
-       super(
-          entry,
-          persistPlayback: persistPlayback,
        ) {
     _valueStream.any((value) => value.isInitialized).then((_) {
       canCaptureFrameNotifier.value = true;
@@ -128,7 +124,7 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
   }
 
   Future<void> _applyOptions([int? startMillis = null]) async {
-    final loopEnabled = settings.videoLoopMode.shouldLoop(entry);
+    final loopEnabled = settings.videoLoopMode.shouldLoop(entry.durationMillis);
     await _instance.setLooping(loopEnabled);
     if (startMillis != null) {
       await seekTo(startMillis);

@@ -1260,5 +1260,19 @@
   "lengthUnitPixel": "px",
   "@lengthUnitPixel": {},
   "lengthUnitPercent": "%",
-  "@lengthUnitPercent": {}
+  "@lengthUnitPercent": {},
+  "exportEntryDialogWriteMetadata": "Escribir metadatos",
+  "@exportEntryDialogWriteMetadata": {},
+  "vaultLockTypePattern": "Patrón",
+  "@vaultLockTypePattern": {},
+  "patternDialogEnter": "Introduzca el patrón",
+  "@patternDialogEnter": {},
+  "patternDialogConfirm": "Confirme el patrón",
+  "@patternDialogConfirm": {},
+  "settingsVideoEnablePip": "Imagen-en-imagen",
+  "@settingsVideoEnablePip": {},
+  "settingsVideoBackgroundMode": "Reproducción de fondo",
+  "@settingsVideoBackgroundMode": {},
+  "settingsVideoBackgroundModeDialogTitle": "Background mode",
+  "@settingsVideoBackgroundModeDialogTitle": {}
 }

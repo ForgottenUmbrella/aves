@@ -1,5 +1,7 @@
 import 'package:aves/services/common/services.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:floating/floating.dart';
+import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -8,8 +10,8 @@ final Device device = Device._private();
 class Device {
   late final String _userAgent;
   late final bool _canAuthenticateUser, _canGrantDirectoryAccess, _canPinShortcut, _canPrint;
-  late final bool _canRenderFlagEmojis, _canRequestManageMedia, _canSetLockScreenWallpaper, _canUseCrypto;
-  late final bool _hasGeocoder, _isDynamicColorAvailable, _isTelevision, _showPinShortcutFeedback, _supportEdgeToEdgeUIMode;
+  late final bool _canRenderFlagEmojis, _canRenderSubdivisionFlagEmojis, _canRequestManageMedia, _canSetLockScreenWallpaper, _canUseCrypto;
+  late final bool _hasGeocoder, _isDynamicColorAvailable, _isTelevision, _showPinShortcutFeedback, _supportEdgeToEdgeUIMode, _supportPictureInPicture;
 
   String get userAgent => _userAgent;
 
@@ -22,6 +24,8 @@ class Device {
   bool get canPrint => _canPrint;
 
   bool get canRenderFlagEmojis => _canRenderFlagEmojis;
+
+  bool get canRenderSubdivisionFlagEmojis => _canRenderSubdivisionFlagEmojis;
 
   bool get canRequestManageMedia => _canRequestManageMedia;
 
@@ -41,6 +45,8 @@ class Device {
 
   bool get supportEdgeToEdgeUIMode => _supportEdgeToEdgeUIMode;
 
+  bool get supportPictureInPicture => _supportPictureInPicture;
+
   Device._private();
 
   Future<void> init() async {
@@ -53,11 +59,21 @@ class Device {
     final auth = LocalAuthentication();
     _canAuthenticateUser = await auth.canCheckBiometrics || await auth.isDeviceSupported();
 
+    final floating = Floating();
+    try {
+      _supportPictureInPicture = await floating.isPipAvailable;
+    } on PlatformException catch (_) {
+      // as of floating v2.0.0, plugin assumes activity and fails when bound via service
+      _supportPictureInPicture = false;
+    }
+    floating.dispose();
+
     final capabilities = await deviceService.getCapabilities();
     _canGrantDirectoryAccess = capabilities['canGrantDirectoryAccess'] ?? false;
     _canPinShortcut = capabilities['canPinShortcut'] ?? false;
     _canPrint = capabilities['canPrint'] ?? false;
     _canRenderFlagEmojis = capabilities['canRenderFlagEmojis'] ?? false;
+    _canRenderSubdivisionFlagEmojis = capabilities['canRenderSubdivisionFlagEmojis'] ?? false;
     _canRequestManageMedia = capabilities['canRequestManageMedia'] ?? false;
     _canSetLockScreenWallpaper = capabilities['canSetLockScreenWallpaper'] ?? false;
     _canUseCrypto = capabilities['canUseCrypto'] ?? false;

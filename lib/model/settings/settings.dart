@@ -13,8 +13,8 @@ import 'package:aves/model/settings/defaults.dart';
 import 'package:aves/model/settings/enums/enums.dart';
 import 'package:aves/model/settings/enums/map_style.dart';
 import 'package:aves/model/source/enums/enums.dart';
+import 'package:aves/ref/bursts.dart';
 import 'package:aves/services/accessibility_service.dart';
-import 'package:aves/services/common/optional_event_channel.dart';
 import 'package:aves/services/common/services.dart';
 import 'package:aves/widgets/aves_app.dart';
 import 'package:aves/widgets/common/search/page.dart';
@@ -23,7 +23,9 @@ import 'package:aves/widgets/filter_grids/countries_page.dart';
 import 'package:aves/widgets/filter_grids/places_page.dart';
 import 'package:aves/widgets/filter_grids/tags_page.dart';
 import 'package:aves_map/aves_map.dart';
+import 'package:aves_utils/aves_utils.dart';
 import 'package:collection/collection.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:latlong2/latlong.dart';
@@ -90,6 +92,7 @@ class Settings extends ChangeNotifier {
   static const drawerPageBookmarksKey = 'drawer_page_bookmarks';
 
   // collection
+  static const collectionBurstPatternsKey = 'collection_burst_patterns';
   static const collectionGroupFactorKey = 'collection_group_factor';
   static const collectionSortFactorKey = 'collection_sort_factor';
   static const collectionSortReverseKey = 'collection_sort_reverse';
@@ -133,6 +136,7 @@ class Settings extends ChangeNotifier {
 
   // video
   static const enableVideoHardwareAccelerationKey = 'video_hwaccel_mediacodec';
+  static const videoBackgroundModeKey = 'video_background_mode';
   static const videoAutoPlayModeKey = 'video_auto_play_mode';
   static const videoLoopModeKey = 'video_loop';
   static const videoControlsKey = 'video_controls';
@@ -244,6 +248,10 @@ class Settings extends ChangeNotifier {
     final performanceClass = await deviceService.getPerformanceClass();
     enableBlurEffect = performanceClass >= 29;
 
+    final androidInfo = await DeviceInfoPlugin().androidInfo;
+    final pattern = BurstPatterns.byManufacturer[androidInfo.manufacturer];
+    collectionBurstPatterns = pattern != null ? [pattern] : [];
+
     // availability
     if (flavor.hasMapStyleDefault) {
       final defaultMapStyle = mobileServices.defaultMapStyle;
@@ -255,40 +263,41 @@ class Settings extends ChangeNotifier {
       }
     }
 
-    applyTvSettings();
+    if (settings.useTvLayout) {
+      applyTvSettings();
+    }
   }
 
   void applyTvSettings() {
-    if (settings.useTvLayout) {
-      themeBrightness = AvesThemeBrightness.dark;
-      mustBackTwiceToExit = false;
-      // address `TV-BU` / `TV-BY` requirements from https://developer.android.com/docs/quality-guidelines/tv-app-quality
-      keepScreenOn = KeepScreenOn.videoPlayback;
-      enableBottomNavigationBar = false;
-      drawerTypeBookmarks = [
-        null,
-        MimeFilter.video,
-        FavouriteFilter.instance,
-      ];
-      drawerPageBookmarks = [
-        AlbumListPage.routeName,
-        CountryListPage.routeName,
-        PlaceListPage.routeName,
-        TagListPage.routeName,
-        SearchPage.routeName,
-      ];
-      showOverlayOnOpening = false;
-      showOverlayMinimap = false;
-      showOverlayThumbnailPreview = false;
-      viewerGestureSideTapNext = false;
-      viewerUseCutout = true;
-      viewerMaxBrightness = false;
-      videoControls = VideoControls.none;
-      videoGestureDoubleTapTogglePlay = false;
-      videoGestureSideDoubleTapSeek = false;
-      enableBin = false;
-      showPinchGestureAlternatives = true;
-    }
+    themeBrightness = AvesThemeBrightness.dark;
+    mustBackTwiceToExit = false;
+    // address `TV-BU` / `TV-BY` requirements from https://developer.android.com/docs/quality-guidelines/tv-app-quality
+    keepScreenOn = KeepScreenOn.videoPlayback;
+    enableBottomNavigationBar = false;
+    drawerTypeBookmarks = [
+      null,
+      MimeFilter.video,
+      FavouriteFilter.instance,
+    ];
+    drawerPageBookmarks = [
+      AlbumListPage.routeName,
+      CountryListPage.routeName,
+      PlaceListPage.routeName,
+      TagListPage.routeName,
+      SearchPage.routeName,
+    ];
+    showOverlayOnOpening = false;
+    showOverlayMinimap = false;
+    showOverlayThumbnailPreview = false;
+    viewerGestureSideTapNext = false;
+    viewerUseCutout = true;
+    viewerMaxBrightness = false;
+    videoBackgroundMode = VideoBackgroundMode.disabled;
+    videoControls = VideoControls.none;
+    videoGestureDoubleTapTogglePlay = false;
+    videoGestureSideDoubleTapSeek = false;
+    enableBin = false;
+    showPinchGestureAlternatives = true;
   }
 
   Future<void> sanitize() async {
@@ -297,6 +306,9 @@ class Settings extends ChangeNotifier {
     }
     if (viewerUseCutout != SettingsDefaults.viewerUseCutout && !await windowService.isCutoutAware()) {
       _set(viewerUseCutoutKey, null);
+    }
+    if (videoBackgroundMode == VideoBackgroundMode.pip && !device.supportPictureInPicture) {
+      _set(videoBackgroundModeKey, null);
     }
   }
 
@@ -490,6 +502,10 @@ class Settings extends ChangeNotifier {
 
   // collection
 
+  List<String> get collectionBurstPatterns => getStringList(collectionBurstPatternsKey) ?? [];
+
+  set collectionBurstPatterns(List<String> newValue) => _set(collectionBurstPatternsKey, newValue);
+
   EntryGroupFactor get collectionSectionFactor => getEnumOrDefault(collectionGroupFactorKey, SettingsDefaults.collectionSectionFactor, EntryGroupFactor.values);
 
   set collectionSectionFactor(EntryGroupFactor newValue) => _set(collectionGroupFactorKey, newValue.toString());
@@ -658,6 +674,10 @@ class Settings extends ChangeNotifier {
   VideoAutoPlayMode get videoAutoPlayMode => getEnumOrDefault(videoAutoPlayModeKey, SettingsDefaults.videoAutoPlayMode, VideoAutoPlayMode.values);
 
   set videoAutoPlayMode(VideoAutoPlayMode newValue) => _set(videoAutoPlayModeKey, newValue.toString());
+
+  VideoBackgroundMode get videoBackgroundMode => getEnumOrDefault(videoBackgroundModeKey, SettingsDefaults.videoBackgroundMode, VideoBackgroundMode.values);
+
+  set videoBackgroundMode(VideoBackgroundMode newValue) => _set(videoBackgroundModeKey, newValue.toString());
 
   VideoLoopMode get videoLoopMode => getEnumOrDefault(videoLoopModeKey, SettingsDefaults.videoLoopMode, VideoLoopMode.values);
 
@@ -884,7 +904,7 @@ class Settings extends ChangeNotifier {
   bool? getBool(String key) {
     try {
       return settingsStore.getBool(key);
-    } catch (e) {
+    } catch (error) {
       // ignore, could be obsolete value of different type
       return null;
     }
@@ -893,7 +913,7 @@ class Settings extends ChangeNotifier {
   int? getInt(String key) {
     try {
       return settingsStore.getInt(key);
-    } catch (e) {
+    } catch (error) {
       // ignore, could be obsolete value of different type
       return null;
     }
@@ -902,7 +922,7 @@ class Settings extends ChangeNotifier {
   double? getDouble(String key) {
     try {
       return settingsStore.getDouble(key);
-    } catch (e) {
+    } catch (error) {
       // ignore, could be obsolete value of different type
       return null;
     }
@@ -911,7 +931,7 @@ class Settings extends ChangeNotifier {
   String? getString(String key) {
     try {
       return settingsStore.getString(key);
-    } catch (e) {
+    } catch (error) {
       // ignore, could be obsolete value of different type
       return null;
     }
@@ -920,7 +940,7 @@ class Settings extends ChangeNotifier {
   List<String>? getStringList(String key) {
     try {
       return settingsStore.getStringList(key);
-    } catch (e) {
+    } catch (error) {
       // ignore, could be obsolete value of different type
       return null;
     }
@@ -934,7 +954,7 @@ class Settings extends ChangeNotifier {
           return v;
         }
       }
-    } catch (e) {
+    } catch (error) {
       // ignore, could be obsolete value of different type
     }
     return defaultValue;
@@ -1117,6 +1137,7 @@ class Settings extends ChangeNotifier {
             case tagSortFactorKey:
             case imageBackgroundKey:
             case videoAutoPlayModeKey:
+            case videoBackgroundModeKey:
             case videoLoopModeKey:
             case videoControlsKey:
             case subtitleTextAlignmentKey:
@@ -1142,6 +1163,7 @@ class Settings extends ChangeNotifier {
             case drawerTypeBookmarksKey:
             case drawerAlbumBookmarksKey:
             case drawerPageBookmarksKey:
+            case collectionBurstPatternsKey:
             case pinnedFiltersKey:
             case hiddenFiltersKey:
             case collectionBrowsingQuickActionsKey:

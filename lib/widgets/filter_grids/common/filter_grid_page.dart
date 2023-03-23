@@ -12,7 +12,8 @@ import 'package:aves/model/source/enums/enums.dart';
 import 'package:aves/model/vaults/vaults.dart';
 import 'package:aves/theme/colors.dart';
 import 'package:aves/theme/durations.dart';
-import 'package:aves/widgets/common/basic/draggable_scrollbar.dart';
+import 'package:aves/widgets/common/basic/draggable_scrollbar/notifications.dart';
+import 'package:aves/widgets/common/basic/draggable_scrollbar/scrollbar.dart';
 import 'package:aves/widgets/common/basic/insets.dart';
 import 'package:aves/widgets/common/basic/scaffold.dart';
 import 'package:aves/widgets/common/behaviour/pop/double_back.dart';
@@ -61,7 +62,7 @@ class FilterGridPage<T extends CollectionFilter> extends StatelessWidget {
   final QueryTest<T> applyQuery;
   final Widget Function() emptyBuilder;
   final HeroType heroType;
-  final StreamController<DraggableScrollBarEvent> _draggableScrollBarEventStreamController = StreamController.broadcast();
+  final StreamController<DraggableScrollbarEvent> _draggableScrollBarEventStreamController = StreamController.broadcast();
 
   FilterGridPage({
     super.key,
@@ -145,7 +146,7 @@ class FilterGridPage<T extends CollectionFilter> extends StatelessWidget {
           final canNavigate = context.select<ValueNotifier<AppMode>, bool>((v) => v.value.canNavigate);
           final showBottomNavigationBar = canNavigate && enableBottomNavigationBar;
 
-          return NotificationListener<DraggableScrollBarNotification>(
+          return NotificationListener<DraggableScrollbarNotification>(
             onNotification: (notification) {
               _draggableScrollBarEventStreamController.add(notification.event);
               return false;
@@ -484,7 +485,29 @@ class _FilterSectionedContentState<T extends CollectionFilter> extends State<_Fi
   @override
   void initState() {
     super.initState();
+    _registerWidget(widget);
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkInitHighlight());
+  }
+
+  @override
+  void didUpdateWidget(covariant _FilterSectionedContent<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _unregisterWidget(oldWidget);
+    _registerWidget(widget);
+  }
+
+  @override
+  void dispose() {
+    _unregisterWidget(widget);
+    super.dispose();
+  }
+
+  void _registerWidget(_FilterSectionedContent<T> widget) {
+    widget.appBarHeightNotifier.addListener(_onAppBarHeightChanged);
+  }
+
+  void _unregisterWidget(_FilterSectionedContent<T> widget) {
+    widget.appBarHeightNotifier.removeListener(_onAppBarHeightChanged);
   }
 
   @override
@@ -525,6 +548,8 @@ class _FilterSectionedContentState<T extends CollectionFilter> extends State<_Fi
       child: selector,
     );
   }
+
+  void _onAppBarHeightChanged() => setState(() {});
 
   Future<void> _checkInitHighlight() async {
     final highlightInfo = context.read<HighlightInfo>();
@@ -630,7 +655,7 @@ class _FilterScrollView<T extends CollectionFilter> extends StatelessWidget {
     return settings.useTvLayout ? scrollView : _buildDraggableScrollView(scrollView);
   }
 
-  Widget _buildDraggableScrollView(ScrollView scrollView) {
+  Widget _buildDraggableScrollView(Widget scrollView) {
     return ValueListenableBuilder<double>(
       valueListenable: appBarHeightNotifier,
       builder: (context, appBarHeight, child) {
@@ -671,7 +696,7 @@ class _FilterScrollView<T extends CollectionFilter> extends StatelessWidget {
     );
   }
 
-  ScrollView _buildScrollView(BuildContext context) {
+  Widget _buildScrollView(BuildContext context) {
     return CustomScrollView(
       key: scrollableKey,
       controller: scrollController,

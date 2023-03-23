@@ -11,8 +11,9 @@ import 'package:aves/theme/durations.dart';
 import 'package:aves/theme/icons.dart';
 import 'package:aves/widgets/common/action_mixins/feedback.dart';
 import 'package:aves/widgets/common/app_bar/app_bar_title.dart';
+import 'package:aves/widgets/common/basic/font_size_icon_theme.dart';
 import 'package:aves/widgets/common/basic/insets.dart';
-import 'package:aves/widgets/common/basic/menu.dart';
+import 'package:aves/widgets/common/basic/popup/menu_row.dart';
 import 'package:aves/widgets/common/basic/scaffold.dart';
 import 'package:aves/widgets/common/behaviour/pop/scope.dart';
 import 'package:aves/widgets/common/behaviour/pop/tv_navigation.dart';
@@ -97,8 +98,15 @@ class _SettingsPageState extends State<SettingsPage> with FeedbackMixin {
                         primary: false,
                       ),
                     ),
-                    const Expanded(
-                      child: _TvRail(),
+                    Expanded(
+                      child: MediaQuery.removePadding(
+                        context: context,
+                        removeLeft: true,
+                        removeTop: true,
+                        removeRight: true,
+                        removeBottom: true,
+                        child: const _TvRail(),
+                      ),
                     ),
                   ],
                 ),
@@ -120,28 +128,26 @@ class _SettingsPageState extends State<SettingsPage> with FeedbackMixin {
               onPressed: () => _goToSearch(context),
               tooltip: MaterialLocalizations.of(context).searchFieldLabel,
             ),
-            MenuIconTheme(
-              child: PopupMenuButton<SettingsAction>(
-                itemBuilder: (context) {
-                  return [
-                    PopupMenuItem(
-                      value: SettingsAction.export,
-                      child: MenuRow(text: context.l10n.settingsActionExport, icon: const Icon(AIcons.fileExport)),
-                    ),
-                    PopupMenuItem(
-                      value: SettingsAction.import,
-                      child: MenuRow(text: context.l10n.settingsActionImport, icon: const Icon(AIcons.fileImport)),
-                    ),
-                  ];
-                },
-                onSelected: (action) async {
-                  // wait for the popup menu to hide before proceeding with the action
-                  await Future.delayed(Durations.popupMenuAnimation * timeDilation);
-                  _onActionSelected(action);
-                },
-              ),
+            PopupMenuButton<SettingsAction>(
+              itemBuilder: (context) {
+                return [
+                  PopupMenuItem(
+                    value: SettingsAction.export,
+                    child: MenuRow(text: context.l10n.settingsActionExport, icon: const Icon(AIcons.fileExport)),
+                  ),
+                  PopupMenuItem(
+                    value: SettingsAction.import,
+                    child: MenuRow(text: context.l10n.settingsActionImport, icon: const Icon(AIcons.fileImport)),
+                  ),
+                ];
+              },
+              onSelected: (action) async {
+                // wait for the popup menu to hide before proceeding with the action
+                await Future.delayed(Durations.popupMenuAnimation * timeDilation);
+                _onActionSelected(action);
+              },
             ),
-          ],
+          ].map((v) => FontSizeIconTheme(child: v)).toList(),
         ),
         body: GestureAreaProtectorStack(
           child: SafeArea(

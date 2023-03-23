@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'package:aves/model/entry.dart';
-import 'package:aves/model/entry_images.dart';
+import 'package:aves/model/entry/entry.dart';
+import 'package:aves/model/entry/extensions/images.dart';
 import 'package:aves/model/panorama.dart';
 import 'package:aves/model/settings/settings.dart';
 import 'package:aves/theme/icons.dart';
@@ -166,7 +166,7 @@ class _PanoramaPageState extends State<PanoramaPage> {
 
   Future<void> _onLeave() async {
     await AvesApp.showSystemUI();
-    AvesApp.setSystemUIStyle(context);
+    AvesApp.setSystemUIStyle(Theme.of(context));
   }
 
   // system UI
@@ -183,7 +183,7 @@ class _PanoramaPageState extends State<PanoramaPage> {
   Future<void> _onOverlayVisibleChanged() async {
     if (_overlayVisible.value) {
       await AvesApp.showSystemUI();
-      AvesApp.setSystemUIStyle(context);
+      AvesApp.setSystemUIStyle(Theme.of(context));
     } else {
       await AvesApp.hideSystemUI();
     }

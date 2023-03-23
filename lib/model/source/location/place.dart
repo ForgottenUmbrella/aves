@@ -1,12 +1,10 @@
-import 'package:aves/model/entry.dart';
+import 'package:aves/model/entry/entry.dart';
 import 'package:aves/model/filters/location.dart';
 import 'package:aves/model/source/collection_source.dart';
 import 'package:aves/utils/collection_utils.dart';
 import 'package:collection/collection.dart';
 
 mixin PlaceMixin on SourceBase {
-  // filter summary
-
   // by place
   final Map<String, int> _filterEntryCountMap = {}, _filterSizeMap = {};
   final Map<String, AvesEntry?> _filterRecentEntryMap = {};

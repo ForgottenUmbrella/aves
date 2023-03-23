@@ -1,5 +1,10 @@
+import 'dart:math';
+
+import 'package:aves/app_mode.dart';
 import 'package:aves/model/actions/entry_actions.dart';
-import 'package:aves/model/entry.dart';
+import 'package:aves/model/entry/entry.dart';
+import 'package:aves/model/entry/extensions/multipage.dart';
+import 'package:aves/model/entry/extensions/props.dart';
 import 'package:aves/model/settings/settings.dart';
 import 'package:aves/model/source/collection_lens.dart';
 import 'package:aves/theme/durations.dart';
@@ -11,15 +16,18 @@ import 'package:aves/widgets/common/action_controls/quick_choosers/tag_button.da
 import 'package:aves/widgets/common/action_controls/togglers/favourite.dart';
 import 'package:aves/widgets/common/action_controls/togglers/mute.dart';
 import 'package:aves/widgets/common/action_controls/togglers/play.dart';
-import 'package:aves/widgets/common/basic/menu.dart';
-import 'package:aves/widgets/common/basic/popup_menu_button.dart';
+import 'package:aves/widgets/common/basic/font_size_icon_theme.dart';
+import 'package:aves/widgets/common/basic/popup/container.dart';
+import 'package:aves/widgets/common/basic/popup/expansion_panel.dart';
+import 'package:aves/widgets/common/basic/popup/menu_button.dart';
+import 'package:aves/widgets/common/basic/popup/menu_row.dart';
 import 'package:aves/widgets/common/extensions/build_context.dart';
 import 'package:aves/widgets/common/identity/buttons/captioned_button.dart';
 import 'package:aves/widgets/common/identity/buttons/overlay_button.dart';
 import 'package:aves/widgets/viewer/action/entry_action_delegate.dart';
-import 'package:aves/widgets/viewer/notifications.dart';
+import 'package:aves/widgets/viewer/controls/notifications.dart';
 import 'package:aves/widgets/viewer/video/conductor.dart';
-import 'package:aves/widgets/viewer/video/controller.dart';
+import 'package:aves_video/aves_video.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -59,6 +67,12 @@ class ViewerButtons extends StatelessWidget {
       );
     }
 
+    final appMode = context.watch<ValueNotifier<AppMode>>().value;
+    bool isVisible(EntryAction action) => actionDelegate.isVisible(
+          appMode: appMode,
+          action: action,
+        );
+
     final trashed = mainEntry.trashed;
     return SafeArea(
       top: false,
@@ -70,13 +84,13 @@ class ViewerButtons extends StatelessWidget {
           return Selector<Settings, bool>(
             selector: (context, s) => s.isRotationLocked,
             builder: (context, s, child) {
-              final quickActions = (trashed ? EntryActions.trashed : settings.viewerQuickActions).where(actionDelegate.isVisible).where(actionDelegate.canApply).take(availableCount - 1).toList();
+              final quickActions = (trashed ? EntryActions.trashed : settings.viewerQuickActions).where(isVisible).where(actionDelegate.canApply).take(max(0, availableCount - 1)).toList();
               List<EntryAction> getMenuActions(List<EntryAction> categoryActions) {
-                return categoryActions.where((action) => !quickActions.contains(action)).where(actionDelegate.isVisible).toList();
+                return categoryActions.where((action) => !quickActions.contains(action)).where(isVisible).toList();
               }
 
               return ViewerButtonRowContent(
-                actionDelegate: EntryActionDelegate(mainEntry, pageEntry, collection),
+                actionDelegate: actionDelegate,
                 quickActions: quickActions,
                 topLevelActions: getMenuActions(EntryActions.topLevel),
                 exportActions: getMenuActions(EntryActions.export),
@@ -107,6 +121,7 @@ class _TvButtonRowContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appMode = context.watch<ValueNotifier<AppMode>>().value;
     return Selector<VideoConductor, AvesVideoController?>(
       selector: (context, vc) => vc.getController(pageEntry),
       builder: (context, videoController, child) {
@@ -118,7 +133,12 @@ class _TvButtonRowContent extends StatelessWidget {
             ...EntryActions.export,
             ...EntryActions.videoPlayback,
             ...EntryActions.video,
-          ].where(actionDelegate.isVisible).map((action) {
+          ]
+              .where((action) => actionDelegate.isVisible(
+                    appMode: appMode,
+                    action: action,
+                  ))
+              .map((action) {
             final enabled = actionDelegate.canApply(action);
             return CaptionedButton(
               scale: scale,
@@ -221,7 +241,7 @@ class ViewerButtonRowContent extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: padding / 2),
                   child: OverlayButton(
                     scale: scale,
-                    child: MenuIconTheme(
+                    child: FontSizeIconTheme(
                       child: AvesPopupMenuButton<EntryAction>(
                         key: const Key('entry-menu-button'),
                         itemBuilder: (context) {
@@ -231,32 +251,26 @@ class ViewerButtonRowContent extends StatelessWidget {
                             if (pageEntry.canRotate || pageEntry.canFlip) _buildRotateAndFlipMenuItems(context),
                             ...topLevelActions.map((action) => _buildPopupMenuItem(context, action, videoController)),
                             if (exportActions.isNotEmpty)
-                              PopupMenuItem<EntryAction>(
-                                padding: EdgeInsets.zero,
-                                child: PopupMenuItemExpansionPanel<EntryAction>(
-                                  value: 'export',
-                                  expandedNotifier: _popupExpandedNotifier,
-                                  icon: AIcons.export,
-                                  title: context.l10n.entryActionExport,
-                                  items: [
-                                    ...exportInternalActions.map((action) => _buildPopupMenuItem(context, action, videoController)).toList(),
-                                    if (exportInternalActions.isNotEmpty && exportExternalActions.isNotEmpty) const PopupMenuDivider(height: 0),
-                                    ...exportExternalActions.map((action) => _buildPopupMenuItem(context, action, videoController)).toList(),
-                                  ],
-                                ),
+                              PopupMenuExpansionPanel<EntryAction>(
+                                value: 'export',
+                                expandedNotifier: _popupExpandedNotifier,
+                                icon: AIcons.export,
+                                title: context.l10n.entryActionExport,
+                                items: [
+                                  ...exportInternalActions.map((action) => _buildPopupMenuItem(context, action, videoController)).toList(),
+                                  if (exportInternalActions.isNotEmpty && exportExternalActions.isNotEmpty) const PopupMenuDivider(height: 0),
+                                  ...exportExternalActions.map((action) => _buildPopupMenuItem(context, action, videoController)).toList(),
+                                ],
                               ),
                             if (videoActions.isNotEmpty)
-                              PopupMenuItem<EntryAction>(
-                                padding: EdgeInsets.zero,
-                                child: PopupMenuItemExpansionPanel<EntryAction>(
-                                  value: 'video',
-                                  expandedNotifier: _popupExpandedNotifier,
-                                  icon: AIcons.video,
-                                  title: context.l10n.settingsVideoSectionTitle,
-                                  items: [
-                                    ...videoActions.map((action) => _buildPopupMenuItem(context, action, videoController)).toList(),
-                                  ],
-                                ),
+                              PopupMenuExpansionPanel<EntryAction>(
+                                value: 'video',
+                                expandedNotifier: _popupExpandedNotifier,
+                                icon: AIcons.video,
+                                title: context.l10n.settingsVideoSectionTitle,
+                                items: [
+                                  ...videoActions.map((action) => _buildPopupMenuItem(context, action, videoController)).toList(),
+                                ],
                               ),
                             if (!kReleaseMode) ...[
                               const PopupMenuDivider(),
@@ -272,6 +286,7 @@ class ViewerButtonRowContent extends StatelessWidget {
                         onCanceled: () {
                           _popupExpandedNotifier.value = null;
                         },
+                        iconSize: IconTheme.of(context).size,
                         onMenuOpened: () {
                           // if the menu is opened while overlay is hiding,
                           // the popup menu button is disposed and menu items are ineffective,
@@ -357,7 +372,7 @@ class ViewerButtonRowContent extends StatelessWidget {
     );
   }
 
-  PopupMenuItem<EntryAction> _buildRotateAndFlipMenuItems(BuildContext context) {
+  PopupMenuEntry<EntryAction> _buildRotateAndFlipMenuItems(BuildContext context) {
     Widget buildDivider() => const SizedBox(
           height: 16,
           child: VerticalDivider(
@@ -383,29 +398,17 @@ class ViewerButtonRowContent extends StatelessWidget {
           ),
         );
 
-    return PopupMenuItem(
-      padding: EdgeInsets.zero,
-      child: IconTheme.merge(
-        data: IconThemeData(
-          color: ListTileTheme.of(context).iconColor,
-        ),
-        child: ColoredBox(
-          color: PopupMenuTheme.of(context).color!,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                buildDivider(),
-                buildItem(EntryAction.rotateCCW),
-                buildDivider(),
-                buildItem(EntryAction.rotateCW),
-                buildDivider(),
-                buildItem(EntryAction.flip),
-                buildDivider(),
-              ],
-            ),
-          ),
-        ),
+    return PopupMenuItemContainer(
+      child: Row(
+        children: [
+          buildDivider(),
+          buildItem(EntryAction.rotateCCW),
+          buildDivider(),
+          buildItem(EntryAction.rotateCW),
+          buildDivider(),
+          buildItem(EntryAction.flip),
+          buildDivider(),
+        ],
       ),
     );
   }

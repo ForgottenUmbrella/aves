@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:aves/app_mode.dart';
-import 'package:aves/model/entry.dart';
+import 'package:aves/model/entry/entry.dart';
+import 'package:aves/model/entry/extensions/catalog.dart';
+import 'package:aves/model/entry/extensions/location.dart';
 import 'package:aves/model/settings/settings.dart';
 import 'package:aves/model/source/collection_source.dart';
 import 'package:aves/services/common/services.dart';
@@ -32,6 +34,7 @@ mixin SingleEntryEditorMixin on FeedbackMixin, PermissionAwareMixin {
         if (isMainMode && source != null) {
           Set<String> obsoleteTags = targetEntry.tags;
           String? obsoleteCountryCode = targetEntry.addressDetails?.countryCode;
+          String? obsoleteStateCode = targetEntry.addressDetails?.stateCode;
 
           await source.refreshEntries({targetEntry}, dataTypes);
 
@@ -40,6 +43,9 @@ mixin SingleEntryEditorMixin on FeedbackMixin, PermissionAwareMixin {
           // otherwise filter chips may eagerly rebuild in between with the old state
           if (obsoleteCountryCode != null) {
             source.invalidateCountryFilterSummary(countryCodes: {obsoleteCountryCode});
+          }
+          if (obsoleteStateCode != null) {
+            source.invalidateStateFilterSummary(stateCodes: {obsoleteStateCode});
           }
           if (obsoleteTags.isNotEmpty) {
             source.invalidateTagFilterSummary(tags: obsoleteTags);
@@ -55,8 +61,8 @@ mixin SingleEntryEditorMixin on FeedbackMixin, PermissionAwareMixin {
       } else {
         showFeedback(context, l10n.genericFailureFeedback);
       }
-    } catch (e, stack) {
-      await reportService.recordError(e, stack);
+    } catch (error, stack) {
+      await reportService.recordError(error, stack);
     }
     source?.resumeMonitoring();
   }

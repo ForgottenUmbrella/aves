@@ -1,7 +1,10 @@
 import 'package:aves/app_mode.dart';
 import 'package:aves/image_providers/app_icon_image_provider.dart';
 import 'package:aves/model/actions/entry_actions.dart';
-import 'package:aves/model/entry.dart';
+import 'package:aves/model/entry/entry.dart';
+import 'package:aves/model/entry/extensions/favourites.dart';
+import 'package:aves/model/entry/extensions/multipage.dart';
+import 'package:aves/model/entry/extensions/props.dart';
 import 'package:aves/model/favourites.dart';
 import 'package:aves/model/filters/album.dart';
 import 'package:aves/model/filters/favourite.dart';
@@ -150,11 +153,20 @@ class _BasicSectionState extends State<BasicSection> {
   }
 
   Widget _buildEditButtons(BuildContext context) {
+    final appMode = context.watch<ValueNotifier<AppMode>>().value;
     final entry = widget.entry;
     final children = [
       EntryAction.editRating,
       EntryAction.editTags,
-    ].where((v) => actionDelegate.canApply(entry, v)).map((v) => _buildEditMetadataButton(context, v)).toList();
+    ]
+        .where((v) => actionDelegate.isVisible(
+              appMode: appMode,
+              targetEntry: entry,
+              action: v,
+            ))
+        .where((v) => actionDelegate.canApply(entry, v))
+        .map((v) => _buildEditMetadataButton(context, v))
+        .toList();
 
     return children.isEmpty
         ? const SizedBox()

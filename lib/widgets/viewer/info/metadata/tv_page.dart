@@ -1,4 +1,4 @@
-import 'package:aves/model/entry.dart';
+import 'package:aves/model/entry/entry.dart';
 import 'package:aves/theme/icons.dart';
 import 'package:aves/widgets/common/basic/scaffold.dart';
 import 'package:aves/widgets/common/behaviour/intents.dart';
@@ -97,11 +97,11 @@ class _TvMetadataPageState extends State<TvMetadataPage> {
                 Expanded(
                   child: FocusableActionDetector(
                     shortcuts: const {
-                      SingleActivator(LogicalKeyboardKey.arrowUp): VerticalScrollIntent.up(),
-                      SingleActivator(LogicalKeyboardKey.arrowDown): VerticalScrollIntent.down(),
+                      SingleActivator(LogicalKeyboardKey.arrowUp): ScrollIntent(direction: AxisDirection.up, type: ScrollIncrementType.page),
+                      SingleActivator(LogicalKeyboardKey.arrowDown): ScrollIntent(direction: AxisDirection.down, type: ScrollIncrementType.page),
                     },
                     actions: {
-                      VerticalScrollIntent: VerticalScrollIntentAction(scrollController: _detailsScrollController),
+                      ScrollIntent: ScrollControllerAction(scrollController: _detailsScrollController),
                     },
                     child: SingleChildScrollView(
                       controller: _detailsScrollController,

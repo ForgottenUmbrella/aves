@@ -13,7 +13,6 @@ import 'package:aves/model/vaults/details.dart';
 import 'package:aves/model/vaults/vaults.dart';
 import 'package:aves/theme/durations.dart';
 import 'package:aves/theme/icons.dart';
-import 'package:aves/widgets/common/basic/menu.dart';
 import 'package:aves/widgets/common/extensions/build_context.dart';
 import 'package:aves/widgets/common/identity/aves_filter_chip.dart';
 import 'package:aves/widgets/common/identity/buttons/captioned_button.dart';
@@ -209,29 +208,29 @@ class _AlbumPickPageState extends State<_AlbumPickPage> {
   }) {
     return [
       if (widget.moveType != null)
-        ..._quickActions.where(isVisible).map((action) => IconButton(
-              icon: action.getIcon(),
-              onPressed: () => onActionSelected(action),
-              tooltip: action.getText(context),
-            )),
-      MenuIconTheme(
-        child: PopupMenuButton<ChipSetAction>(
-          itemBuilder: (context) {
-            return _menuActions.where((v) => v == null || isVisible(v)).map((action) {
-              if (action == null) return const PopupMenuDivider();
-              return FilterGridAppBar.toMenuItem(context, action, enabled: true);
-            }).toList();
-          },
-          onSelected: (action) async {
-            // remove focus, if any, to prevent the keyboard from showing up
-            // after the user is done with the popup menu
-            FocusManager.instance.primaryFocus?.unfocus();
+        ..._quickActions.where(isVisible).map(
+              (action) => IconButton(
+                icon: action.getIcon(),
+                onPressed: () => onActionSelected(action),
+                tooltip: action.getText(context),
+              ),
+            ),
+      PopupMenuButton<ChipSetAction>(
+        itemBuilder: (context) {
+          return _menuActions.where((v) => v == null || isVisible(v)).map((action) {
+            if (action == null) return const PopupMenuDivider();
+            return FilterGridAppBar.toMenuItem(context, action, enabled: true);
+          }).toList();
+        },
+        onSelected: (action) async {
+          // remove focus, if any, to prevent the keyboard from showing up
+          // after the user is done with the popup menu
+          FocusManager.instance.primaryFocus?.unfocus();
 
-            // wait for the popup menu to hide before proceeding with the action
-            await Future.delayed(Durations.popupMenuAnimation * timeDilation);
-            onActionSelected(action);
-          },
-        ),
+          // wait for the popup menu to hide before proceeding with the action
+          await Future.delayed(Durations.popupMenuAnimation * timeDilation);
+          onActionSelected(action);
+        },
       ),
     ];
   }

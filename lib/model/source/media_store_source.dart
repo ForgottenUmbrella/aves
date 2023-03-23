@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:aves/model/covers.dart';
-import 'package:aves/model/entry.dart';
+import 'package:aves/model/entry/entry.dart';
+import 'package:aves/model/entry/origins.dart';
 import 'package:aves/model/favourites.dart';
 import 'package:aves/model/settings/settings.dart';
 import 'package:aves/model/source/analysis_controller.dart';
@@ -201,7 +202,8 @@ class MediaStoreSource extends CollectionSource {
         // so we manually notify change for potential home screen filters
         notifyAlbumsChanged();
 
-        debugPrint('$runtimeType refresh ${stopwatch.elapsed} done for ${knownEntries.length} known, ${allNewEntries.length} new, ${removedEntries.length} removed');
+        debugPrint('$runtimeType refresh ${stopwatch.elapsed} done');
+        unawaited(reportService.log('Source refresh complete in ${stopwatch.elapsed.inSeconds}s for ${knownEntries.length} known, ${allNewEntries.length} new, ${removedEntries.length} removed'));
       },
       onError: (error) => debugPrint('$runtimeType stream error=$error'),
     );

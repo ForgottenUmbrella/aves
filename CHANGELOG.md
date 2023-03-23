@@ -6,16 +6,69 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Collection: optional support for Samsung and Sony burst patterns
+- Info: improved state/place display (requires rescan, limited to AU/GB/EN)
+- improved support for system font scale
+
+### Changed
+
+- upgraded Flutter to stable v3.7.8
+
+### Fixed
+
+- permission confusion when removable volume changes
+- Viewer: flickering on first scale animation in some cases
+
+## <a id="v1.8.4"></a>[v1.8.4] - 2023-03-17
+
+### Added
+
+- TV: improved support for Licenses
+
+### Fixed
+
+- Viewer: playing video from app content provider
+- Search: using the query bar yields a black screen
+
+## <a id="v1.8.3"></a>[v1.8.3] - 2023-03-13
+
+### Added
+
+- Collection: preview button when selecting items
+- Collection: item size in list layout
+- Vaults: custom pattern lock
+- Video: picture-in-picture
+- Video: handle skip next/previous media buttons
+- TV: more media controls
+
+### Changed
+
+- scroll to show item when navigating from Info page
+- upgraded Flutter to stable v3.7.7
+
+### Fixed
+
+- Accessibility: using accessibility services keeping snack bar beyond countdown
+- Accessibility: navigation with TalkBack
+- Vaults: crash when using fingerprint on older Android versions
+- Vaults: sharing multiple items
+
+## <a id="v1.8.2"></a>[v1.8.2] - 2023-02-28
+
+### Added
+
 - Export: bulk converting
 - Export: write metadata when converting
 - Places: page & navigation entry
 
 ### Changed
 
+- rating/tagging action icons
 - upgraded Flutter to stable v3.7.5
 
 ### Fixed
 
+- viewer pan/scale gestures interpreted as fling gestures
 - replacing when moving item to vault
 - exporting item to vault
 

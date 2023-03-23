@@ -159,6 +159,7 @@ class _BugReportState extends State<BugReport> with FeedbackMixin {
       'System locales: ${WidgetsBinding.instance.window.locales.join(', ')}',
       'Aves locale: ${settings.locale ?? 'system'} -> ${settings.appliedLocale}',
       'Installer: ${packageInfo.installerStore}',
+      'Error reporting: ${settings.isErrorReportingAllowed}',
     ].join('\n');
   }
 

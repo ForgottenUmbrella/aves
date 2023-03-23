@@ -4,8 +4,10 @@ import 'package:aves/app_mode.dart';
 import 'package:aves/model/actions/entry_set_actions.dart';
 import 'package:aves/model/actions/move_type.dart';
 import 'package:aves/model/device.dart';
-import 'package:aves/model/entry.dart';
-import 'package:aves/model/entry_metadata_edition.dart';
+import 'package:aves/model/entry/entry.dart';
+import 'package:aves/model/entry/extensions/favourites.dart';
+import 'package:aves/model/entry/extensions/metadata_edition.dart';
+import 'package:aves/model/entry/extensions/props.dart';
 import 'package:aves/model/favourites.dart';
 import 'package:aves/model/filters/filters.dart';
 import 'package:aves/model/metadata/date_modifier.dart';
@@ -415,6 +417,7 @@ class EntrySetActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAware
 
     Set<String> obsoleteTags = todoItems.expand((entry) => entry.tags).toSet();
     Set<String> obsoleteCountryCodes = todoItems.where((entry) => entry.hasAddress).map((entry) => entry.addressDetails?.countryCode).whereNotNull().toSet();
+    Set<String> obsoleteStateCodes = todoItems.where((entry) => entry.hasAddress).map((entry) => entry.addressDetails?.stateCode).whereNotNull().toSet();
 
     final dataTypes = <EntryDataType>{};
     final source = context.read<CollectionSource>();
@@ -444,6 +447,9 @@ class EntrySetActionDelegate with FeedbackMixin, PermissionAwareMixin, SizeAware
           // otherwise filter chips may eagerly rebuild in between with the old state
           if (obsoleteCountryCodes.isNotEmpty) {
             source.invalidateCountryFilterSummary(countryCodes: obsoleteCountryCodes);
+          }
+          if (obsoleteStateCodes.isNotEmpty) {
+            source.invalidateStateFilterSummary(stateCodes: obsoleteStateCodes);
           }
           if (obsoleteTags.isNotEmpty) {
             source.invalidateTagFilterSummary(tags: obsoleteTags);

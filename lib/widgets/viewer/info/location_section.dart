@@ -1,4 +1,6 @@
-import 'package:aves/model/entry.dart';
+import 'package:aves/app_mode.dart';
+import 'package:aves/model/entry/entry.dart';
+import 'package:aves/model/entry/extensions/location.dart';
 import 'package:aves/model/filters/location.dart';
 import 'package:aves/model/settings/enums/coordinate_format.dart';
 import 'package:aves/model/settings/settings.dart';
@@ -13,6 +15,7 @@ import 'package:aves/widgets/map/map_page.dart';
 import 'package:aves/widgets/viewer/info/common.dart';
 import 'package:aves_map/aves_map.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class LocationSection extends StatefulWidget {
   final CollectionLens? collection;
@@ -72,6 +75,7 @@ class _LocationSectionState extends State<LocationSection> {
   Widget build(BuildContext context) {
     if (!entry.hasGps) return const SizedBox();
 
+    final canNavigate = context.select<ValueNotifier<AppMode>, bool>((v) => v.value.canNavigate);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -79,7 +83,7 @@ class _LocationSectionState extends State<LocationSection> {
         MapTheme(
           interactive: false,
           showCoordinateFilter: false,
-          navigationButton: MapNavigationButton.map,
+          navigationButton: canNavigate ? MapNavigationButton.map : MapNavigationButton.none,
           visualDensity: VisualDensity.compact,
           mapHeight: 200,
           child: GeoMap(
@@ -87,7 +91,7 @@ class _LocationSectionState extends State<LocationSection> {
             entries: [entry],
             isAnimatingNotifier: widget.isScrollingNotifier,
             onUserZoomChange: (zoom) => settings.infoMapZoom = zoom.roundToDouble(),
-            onMarkerTap: collection != null ? (location, entry) => _openMapPage(context) : null,
+            onMarkerTap: collection != null && canNavigate ? (location, entry) => _openMapPage(context) : null,
             openMapPage: collection != null ? _openMapPage : null,
           ),
         ),
@@ -99,6 +103,8 @@ class _LocationSectionState extends State<LocationSection> {
               final address = entry.addressDetails!;
               final country = address.countryName;
               if (country != null && country.isNotEmpty) filters.add(LocationFilter(LocationLevel.country, '$country${LocationFilter.locationSeparator}${address.countryCode}'));
+              final state = address.stateName;
+              if (state != null && state.isNotEmpty) filters.add(LocationFilter(LocationLevel.state, '$state${LocationFilter.locationSeparator}${address.stateCode}'));
               final place = address.place;
               if (place != null && place.isNotEmpty) filters.add(LocationFilter(LocationLevel.place, place));
             }

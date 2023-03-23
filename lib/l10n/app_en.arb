@@ -226,8 +226,11 @@
   "unitSystemMetric": "Metric",
   "unitSystemImperial": "Imperial",
 
-  "vaultLockTypePin": "Pin",
+  "vaultLockTypePattern": "Pattern",
+  "vaultLockTypePin": "PIN",
   "vaultLockTypePassword": "Password",
+
+  "settingsVideoEnablePip": "Picture-in-picture",
 
   "videoControlsPlay": "Play",
   "videoControlsPlaySeek": "Play & seek backward/forward",
@@ -384,8 +387,11 @@
   "vaultDialogLockModeWhenScreenOff": "Lock when screen turns off",
   "vaultDialogLockTypeLabel": "Lock type",
 
-  "pinDialogEnter": "Enter pin",
-  "pinDialogConfirm": "Confirm pin",
+  "patternDialogEnter": "Enter pattern",
+  "patternDialogConfirm": "Confirm pattern",
+
+  "pinDialogEnter": "Enter PIN",
+  "pinDialogConfirm": "Confirm PIN",
 
   "passwordDialogEnter": "Enter password",
   "passwordDialogConfirm": "Confirm password",
@@ -748,6 +754,9 @@
   "settingsCollectionBrowsingQuickActionEditorBanner": "Touch and hold to move buttons and select which actions are displayed when browsing items.",
   "settingsCollectionSelectionQuickActionEditorBanner": "Touch and hold to move buttons and select which actions are displayed when selecting items.",
 
+  "settingsCollectionBurstPatternsTile": "Burst patterns",
+  "settingsCollectionBurstPatternsNone": "None",
+
   "settingsViewerSectionTitle": "Viewer",
   "settingsViewerGestureSideTapNext": "Tap on screen edges to show previous/next item",
   "settingsViewerUseCutout": "Use cutout area",
@@ -792,6 +801,8 @@
   "settingsVideoAutoPlay": "Auto play",
   "settingsVideoLoopModeTile": "Loop mode",
   "settingsVideoLoopModeDialogTitle": "Loop Mode",
+  "settingsVideoBackgroundMode": "Background mode",
+  "settingsVideoBackgroundModeDialogTitle": "Background Mode",
 
   "settingsSubtitleThemeTile": "Subtitles",
   "settingsSubtitleThemePageTitle": "Subtitles",

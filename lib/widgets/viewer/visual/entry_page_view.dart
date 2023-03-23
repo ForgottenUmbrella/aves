@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:aves/app_mode.dart';
 import 'package:aves/model/actions/entry_actions.dart';
-import 'package:aves/model/entry.dart';
+import 'package:aves/model/entry/entry.dart';
+import 'package:aves/model/entry/extensions/props.dart';
 import 'package:aves/model/settings/enums/accessibility_animations.dart';
 import 'package:aves/model/settings/settings.dart';
 import 'package:aves/services/common/services.dart';
@@ -10,9 +11,9 @@ import 'package:aves/services/media/media_session_service.dart';
 import 'package:aves/theme/icons.dart';
 import 'package:aves/widgets/common/action_mixins/feedback.dart';
 import 'package:aves/widgets/common/basic/insets.dart';
-import 'package:aves/widgets/viewer/controller.dart';
+import 'package:aves/widgets/viewer/controls/controller.dart';
+import 'package:aves/widgets/viewer/controls/notifications.dart';
 import 'package:aves/widgets/viewer/hero.dart';
-import 'package:aves/widgets/viewer/notifications.dart';
 import 'package:aves/widgets/viewer/video/conductor.dart';
 import 'package:aves/widgets/viewer/visual/conductor.dart';
 import 'package:aves/widgets/viewer/visual/error.dart';
@@ -233,6 +234,7 @@ class _EntryPageViewState extends State<EntryPageView> with SingleTickerProvider
                 );
                 VideoActionNotification(
                   controller: videoController,
+                  entry: entry,
                   action: action,
                 ).dispatch(context);
               }
@@ -240,12 +242,15 @@ class _EntryPageViewState extends State<EntryPageView> with SingleTickerProvider
               onDoubleTap = (alignment) {
                 final x = alignment.x;
                 if (seekGesture) {
-                  if (x < sideRatio) {
-                    _applyAction(EntryAction.videoReplay10);
-                    return true;
-                  } else if (x > 1 - sideRatio) {
-                    _applyAction(EntryAction.videoSkip10);
-                    return true;
+                  final sideRatio = _getSideRatio();
+                  if (sideRatio != null) {
+                    if (x < sideRatio) {
+                      _applyAction(EntryAction.videoReplay10);
+                      return true;
+                    } else if (x > 1 - sideRatio) {
+                      _applyAction(EntryAction.videoSkip10);
+                      return true;
+                    }
                   }
                 }
                 if (playGesture) {
@@ -323,6 +328,7 @@ class _EntryPageViewState extends State<EntryPageView> with SingleTickerProvider
                   ),
                 ),
                 VideoSubtitles(
+                  entry: entry,
                   controller: videoController,
                   viewStateNotifier: _viewStateNotifier,
                 ),
@@ -428,12 +434,15 @@ class _EntryPageViewState extends State<EntryPageView> with SingleTickerProvider
   void _onTap({Alignment? alignment}) {
     if (settings.viewerGestureSideTapNext && alignment != null) {
       final x = alignment.x;
-      if (x < sideRatio) {
-        const ShowPreviousEntryNotification(animate: false).dispatch(context);
-        return;
-      } else if (x > 1 - sideRatio) {
-        const ShowNextEntryNotification(animate: false).dispatch(context);
-        return;
+      final sideRatio = _getSideRatio();
+      if (sideRatio != null) {
+        if (x < sideRatio) {
+          const ShowPreviousEntryNotification(animate: false).dispatch(context);
+          return;
+        } else if (x > 1 - sideRatio) {
+          const ShowNextEntryNotification(animate: false).dispatch(context);
+          return;
+        }
       }
     }
     const ToggleOverlayNotification().dispatch(context);
@@ -449,6 +458,12 @@ class _EntryPageViewState extends State<EntryPageView> with SingleTickerProvider
         break;
       case MediaCommand.pause:
         videoController.pause();
+        break;
+      case MediaCommand.skipToNext:
+        ShowNextVideoNotification().dispatch(context);
+        break;
+      case MediaCommand.skipToPrevious:
+        ShowPreviousVideoNotification().dispatch(context);
         break;
       case MediaCommand.stop:
         videoController.pause();
@@ -475,12 +490,14 @@ class _EntryPageViewState extends State<EntryPageView> with SingleTickerProvider
     );
   }
 
-  double get sideRatio {
-    switch (context.read<MediaQueryData>().orientation) {
+  double? _getSideRatio() {
+    switch (context.read<MediaQueryData?>()?.orientation) {
       case Orientation.portrait:
         return 1 / 5;
       case Orientation.landscape:
         return 1 / 8;
+      case null:
+        return null;
     }
   }
 

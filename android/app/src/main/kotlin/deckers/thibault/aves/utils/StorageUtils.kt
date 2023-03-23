@@ -44,8 +44,14 @@ object StorageUtils {
 
     const val TRASH_PATH_PLACEHOLDER = "#trash"
 
+    // whether the provided path is on one of this app specific directories:
+    // - /storage/{volume}/Android/data/{package_name}/files
+    // - /data/user/0/{package_name}/files
     private fun isAppFile(context: Context, path: String): Boolean {
-        val dirs = context.getExternalFilesDirs(null).filterNotNull()
+        val dirs = listOf(
+            *context.getExternalFilesDirs(null).filterNotNull().toTypedArray(),
+            context.filesDir,
+        )
         return dirs.any { path.startsWith(it.path) }
     }
 
@@ -342,7 +348,17 @@ object StorageUtils {
 
         // fallback when UUID does not appear in the SD card volume path
         val primaryVolumePath = getPrimaryVolumePath(context)
-        getVolumePaths(context).firstOrNull { it != primaryVolumePath }?.let { return it }
+        getVolumePaths(context).firstOrNull { volumePath ->
+            if (volumePath == primaryVolumePath) {
+                false
+            } else {
+                // exclude volumes that use regular naming scheme with UUID in them
+                // to prevent returning path with the UUID of a new volume
+                // when the argument is the UUID of an obsolete volume
+                val volumeUuid = volumePath.split(File.separator).lastOrNull { it.isNotEmpty() }
+                !(volumeUuid == null || volumeUuid.matches(UUID_PATTERN))
+            }
+        }?.let { return it }
 
         Log.e(LOG_TAG, "failed to find volume path for UUID=$uuid")
         return null
@@ -693,7 +709,7 @@ object StorageUtils {
     class PathSegments(context: Context, fullPath: String) {
         var volumePath: String? = null // `volumePath` with trailing "/"
         var relativeDir: String? = null // `relativeDir` with trailing "/"
-        var fileName: String? = null // null for directories
+        private var fileName: String? = null // null for directories
 
         init {
             volumePath = getVolumePath(context, fullPath)

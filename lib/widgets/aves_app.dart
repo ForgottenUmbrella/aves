@@ -18,7 +18,6 @@ import 'package:aves/model/source/collection_lens.dart';
 import 'package:aves/model/source/collection_source.dart';
 import 'package:aves/model/source/media_store_source.dart';
 import 'package:aves/services/accessibility_service.dart';
-import 'package:aves/services/common/optional_event_channel.dart';
 import 'package:aves/services/common/services.dart';
 import 'package:aves/theme/colors.dart';
 import 'package:aves/theme/durations.dart';
@@ -33,12 +32,14 @@ import 'package:aves/widgets/common/basic/scaffold.dart';
 import 'package:aves/widgets/common/behaviour/route_tracker.dart';
 import 'package:aves/widgets/common/behaviour/routes.dart';
 import 'package:aves/widgets/common/extensions/build_context.dart';
+import 'package:aves/widgets/common/providers/durations_provider.dart';
 import 'package:aves/widgets/common/providers/highlight_info_provider.dart';
 import 'package:aves/widgets/common/providers/media_query_data_provider.dart';
 import 'package:aves/widgets/home_page.dart';
 import 'package:aves/widgets/navigation/tv_page_transitions.dart';
 import 'package:aves/widgets/navigation/tv_rail.dart';
 import 'package:aves/widgets/welcome_page.dart';
+import 'package:aves_utils/aves_utils.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
@@ -55,7 +56,7 @@ class AvesApp extends StatefulWidget {
 
   // temporary exclude locales not ready yet for prime time
   // `ckb`: add `flutter_ckb_localization` and necessary app localization delegates when ready
-  static final _unsupportedLocales = {'ar', 'ckb', 'fa', 'gl', 'he', 'nn', 'sk', 'th'}.map(Locale.new).toSet();
+  static final _unsupportedLocales = {'ar', 'ckb', 'fa', 'gl', 'he', 'hi', 'nn', 'sk', 'th'}.map(Locale.new).toSet();
   static final List<Locale> supportedLocales = AppLocalizations.supportedLocales.where((v) => !_unsupportedLocales.contains(v)).toList();
   static final ValueNotifier<EdgeInsets> cutoutInsetsNotifier = ValueNotifier(EdgeInsets.zero);
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey(debugLabel: 'app-navigator');
@@ -72,8 +73,7 @@ class AvesApp extends StatefulWidget {
   @override
   State<AvesApp> createState() => _AvesAppState();
 
-  static void setSystemUIStyle(BuildContext context) {
-    final theme = Theme.of(context);
+  static void setSystemUIStyle(ThemeData theme) {
     final style = systemUIStyleForBrightness(theme.brightness, theme.scaffoldBackgroundColor);
     SystemChrome.setSystemUIOverlayStyle(style);
   }
@@ -189,95 +189,104 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     // place the settings provider above `MaterialApp`
     // so it can be used during navigation transitions
-    return Provider<AppFlavor>.value(
-      value: widget.flavor,
-      child: ChangeNotifierProvider<Settings>.value(
-        value: settings,
-        child: ListenableProvider<ValueNotifier<AppMode>>.value(
-          value: _appModeNotifier,
-          child: Provider<CollectionSource>.value(
-            value: _mediaStoreSource,
-            child: Provider<TvRailController>.value(
-              value: _tvRailController,
-              child: DurationsProvider(
-                child: HighlightInfoProvider(
-                  child: OverlaySupport(
-                    child: FutureBuilder<void>(
-                      future: _appSetup,
-                      builder: (context, snapshot) {
-                        final initialized = !snapshot.hasError && snapshot.connectionState == ConnectionState.done;
-                        if (initialized) {
-                          AvesApp.showSystemUI();
-                        }
-                        final home = initialized
-                            ? _getFirstPage()
-                            : AvesScaffold(
-                                body: snapshot.hasError ? _buildError(snapshot.error!) : const SizedBox(),
-                              );
-                        return Selector<Settings, Tuple3<Locale?, AvesThemeBrightness, bool>>(
-                          selector: (context, s) => Tuple3(
-                            s.locale,
-                            s.initialized ? s.themeBrightness : SettingsDefaults.themeBrightness,
-                            s.initialized ? s.enableDynamicColor : SettingsDefaults.enableDynamicColor,
-                          ),
-                          builder: (context, s, child) {
-                            final settingsLocale = s.item1;
-                            final themeBrightness = s.item2;
-                            final enableDynamicColor = s.item3;
+    return MultiProvider(
+      providers: [
+        Provider<AppFlavor>.value(value: widget.flavor),
+        ChangeNotifierProvider<Settings>.value(value: settings),
+        ListenableProvider<ValueNotifier<AppMode>>.value(value: _appModeNotifier),
+        Provider<CollectionSource>.value(value: _mediaStoreSource),
+        Provider<TvRailController>.value(value: _tvRailController),
+        DurationsProvider(),
+        HighlightInfoProvider(),
+      ],
+      child: OverlaySupport(
+        child: FutureBuilder<void>(
+          future: _appSetup,
+          builder: (context, snapshot) {
+            final initialized = !snapshot.hasError && snapshot.connectionState == ConnectionState.done;
+            if (initialized) {
+              AvesApp.showSystemUI();
+            }
+            final home = initialized
+                ? _getFirstPage()
+                : AvesScaffold(
+                    body: snapshot.hasError ? _buildError(snapshot.error!) : const SizedBox(),
+                  );
+            return Selector<Settings, Tuple3<Locale?, AvesThemeBrightness, bool>>(
+              selector: (context, s) => Tuple3(
+                s.locale,
+                s.initialized ? s.themeBrightness : SettingsDefaults.themeBrightness,
+                s.initialized ? s.enableDynamicColor : SettingsDefaults.enableDynamicColor,
+              ),
+              builder: (context, s, child) {
+                final settingsLocale = s.item1;
+                final themeBrightness = s.item2;
+                final enableDynamicColor = s.item3;
 
-                            Constants.updateStylesForLocale(settings.appliedLocale);
+                Constants.updateStylesForLocale(settings.appliedLocale);
 
-                            return FutureBuilder<CorePalette?>(
-                              future: _dynamicColorPaletteLoader,
-                              builder: (context, snapshot) {
-                                const defaultAccent = Themes.defaultAccent;
-                                Color lightAccent = defaultAccent, darkAccent = defaultAccent;
-                                if (enableDynamicColor) {
-                                  // `DynamicColorBuilder` from package `dynamic_color` provides light/dark
-                                  // palettes with a primary color from tones too dark/light (40/80),
-                                  // so we derive the color with adjusted tones (60/70)
-                                  final tonalPalette = snapshot.data?.primary;
-                                  lightAccent = Color(tonalPalette?.get(60) ?? defaultAccent.value);
-                                  darkAccent = Color(tonalPalette?.get(70) ?? defaultAccent.value);
-                                }
-                                final lightTheme = Themes.lightTheme(lightAccent, initialized);
-                                final darkTheme = themeBrightness == AvesThemeBrightness.black ? Themes.blackTheme(darkAccent, initialized) : Themes.darkTheme(darkAccent, initialized);
-                                return Shortcuts(
-                                  shortcuts: {
-                                    // handle Android TV remote `select` button
-                                    LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(),
-                                  },
-                                  child: MaterialApp(
-                                    navigatorKey: AvesApp.navigatorKey,
-                                    home: home,
-                                    navigatorObservers: _navigatorObservers,
-                                    builder: (context, child) => _decorateAppChild(
-                                      context: context,
-                                      initialized: initialized,
-                                      child: child,
-                                    ),
-                                    onGenerateTitle: (context) => context.l10n.appName,
-                                    theme: lightTheme,
-                                    darkTheme: darkTheme,
-                                    themeMode: themeBrightness.appThemeMode,
-                                    locale: settingsLocale,
-                                    localizationsDelegates: AppLocalizations.localizationsDelegates,
-                                    supportedLocales: AvesApp.supportedLocales,
-                                    // TODO TLAD remove custom scroll behavior when this is fixed: https://github.com/flutter/flutter/issues/82906
-                                    scrollBehavior: StretchMaterialScrollBehavior(),
-                                  ),
-                                );
-                              },
+                return FutureBuilder<CorePalette?>(
+                  future: _dynamicColorPaletteLoader,
+                  builder: (context, snapshot) {
+                    const defaultAccent = Themes.defaultAccent;
+                    Color lightAccent = defaultAccent, darkAccent = defaultAccent;
+                    if (enableDynamicColor) {
+                      // `DynamicColorBuilder` from package `dynamic_color` provides light/dark
+                      // palettes with a primary color from tones too dark/light (40/80),
+                      // so we derive the color with adjusted tones (60/70)
+                      final tonalPalette = snapshot.data?.primary;
+                      lightAccent = Color(tonalPalette?.get(60) ?? defaultAccent.value);
+                      darkAccent = Color(tonalPalette?.get(70) ?? defaultAccent.value);
+                    }
+                    final lightTheme = Themes.lightTheme(lightAccent, initialized);
+                    final darkTheme = themeBrightness == AvesThemeBrightness.black ? Themes.blackTheme(darkAccent, initialized) : Themes.darkTheme(darkAccent, initialized);
+                    return Shortcuts(
+                      shortcuts: {
+                        // handle Android TV remote `select` button (KEYCODE_DPAD_CENTER)
+                        // the following keys are already handled by default:
+                        // KEYCODE_ENTER, KEYCODE_BUTTON_A, KEYCODE_NUMPAD_ENTER
+                        LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(),
+                      },
+                      child: MediaQuery.fromWindow(
+                        child: Builder(
+                          builder: (context) {
+                            return MediaQuery(
+                              data: MediaQuery.of(context).copyWith(
+                                // disable accessible navigation, as it impacts snack bar action timer
+                                // for all users of apps registered as accessibility services,
+                                // even though they are not for accessibility purposes (like TalkBack is)
+                                accessibleNavigation: false,
+                              ),
+                              child: MaterialApp(
+                                navigatorKey: AvesApp.navigatorKey,
+                                home: home,
+                                navigatorObservers: _navigatorObservers,
+                                builder: (context, child) => _decorateAppChild(
+                                  context: context,
+                                  initialized: initialized,
+                                  child: child,
+                                ),
+                                onGenerateTitle: (context) => context.l10n.appName,
+                                theme: lightTheme,
+                                darkTheme: darkTheme,
+                                themeMode: themeBrightness.appThemeMode,
+                                locale: settingsLocale,
+                                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                                supportedLocales: AvesApp.supportedLocales,
+                                // TODO TLAD remove custom scroll behavior when this is fixed: https://github.com/flutter/flutter/issues/82906
+                                scrollBehavior: StretchMaterialScrollBehavior(),
+                                useInheritedMediaQuery: true,
+                              ),
                             );
                           },
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
         ),
       ),
     );
@@ -289,7 +298,7 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
     required Widget? child,
   }) {
     if (initialized) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => AvesApp.setSystemUIStyle(context));
+      WidgetsBinding.instance.addPostFrameCallback((_) => AvesApp.setSystemUIStyle(Theme.of(context)));
     }
     return Selector<Settings, bool>(
       selector: (context, s) => s.initialized ? s.accessibilityAnimations.animate : true,
@@ -353,7 +362,6 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    debugPrint('$runtimeType lifecycle ${state.name}');
     reportService.log('Lifecycle ${state.name}');
     switch (state) {
       case AppLifecycleState.inactive:
@@ -545,6 +553,7 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
       'locales': WidgetsBinding.instance.window.locales.join(', '),
       'time_zone': '${now.timeZoneName} (${now.timeZoneOffset})',
     });
+    await reportService.log('Launch');
     setState(() => _navigatorObservers = [
           AvesApp.pageRouteObserver,
           ReportingRouteTracker(),
@@ -555,7 +564,10 @@ class _AvesAppState extends State<AvesApp> with WidgetsBindingObserver {
     debugPrint('$runtimeType onNewIntent with intentData=$intentData');
 
     // do not reset when relaunching the app
-    if (_appModeNotifier.value == AppMode.main && (intentData == null || intentData.isEmpty == true)) return;
+    if (_appModeNotifier.value == AppMode.main && (intentData == null || intentData.isEmpty == true)) {
+      reportService.log('Relaunch');
+      return;
+    }
 
     reportService.log('New intent data=$intentData');
     AvesApp.navigatorKey.currentState!.pushReplacement(DirectMaterialPageRoute(
