@@ -26,17 +26,25 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
   final AChangeNotifier _completedNotifier = AChangeNotifier();
   /* No need to offset. The 16x-dimension bug has been fixed:
    * https://github.com/flutter/flutter/issues/34642 */
-  final List<StreamSummary> _streams = [];
+  final List<MediaStreamSummary> _streams = [];
   /* No need for initial play timer workaround. */
   double _speed = 1;
   double _volume = 1;
+  // For some reason the superclass only exposes an AvesEntryBase instance,
+  // despite all usages passing an AvesEntry into the constructor --- which
+  // then gets downcast into an AvesEntryBase. We need the added properties of
+  // the full entry, so capture it ourselves.
+  final AvesEntry _entry;
+
+  @override
+  AvesEntry get entry => _entry;
 
   // Actual min is zero exclusive.
-  // No one could want it to go slower than .25, right?
+  // Copying VLC's min.
   @override
   final double minSpeed = .25;
 
-  // Actual max is non-existent. Copying VLC's max.
+  // Actual max is theoretically non-existent. Copying VLC's max.
   @override
   final double maxSpeed = 4;
 
@@ -64,16 +72,13 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
   static final options = VideoPlayerOptions(mixWithOthers: true);
 
   VideoPlayerAvesVideoController(
-    AvesEntry entry, {
-    required bool persistPlayback,
+    this._entry, {
+    required super.playbackStateHandler,
   }) : _instance = VideoPlayerController.contentUri(
-          Uri.parse(entry.uri),
+          Uri.parse(_entry.uri),
           videoPlayerOptions: options,
        ),
-       super(
-          entry,
-          persistPlayback: persistPlayback,
-       ) {
+       super(_entry) {
     _valueStream.any((value) => value.isInitialized).then((_) {
       canCaptureFrameNotifier.value = true;
       canMuteNotifier.value = true;
@@ -127,8 +132,8 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
     await play();
   }
 
-  Future<void> _applyOptions([int? startMillis = null]) async {
-    final loopEnabled = settings.videoLoopMode.shouldLoop(entry);
+  Future<void> _applyOptions([int? startMillis]) async {
+    final loopEnabled = settings.videoLoopMode.shouldLoop(entry.durationMillis);
     await _instance.setLooping(loopEnabled);
     if (startMillis != null) {
       await seekTo(startMillis);
@@ -148,7 +153,7 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
       if (type != null) {
         final width = stream[Keys.width] as int?;
         final height = stream[Keys.height] as int?;
-        _streams.add(StreamSummary(
+        _streams.add(MediaStreamSummary(
           type: type,
           index: stream[Keys.index],
           codecName: stream[Keys.codecName],
@@ -158,16 +163,16 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
           height: height,
         ));
         switch (type) {
-          case StreamType.video:
+          case MediaStreamType.video:
             // check width/height to exclude image streams (that are included among video streams)
             if (width != null && height != null) {
               videoStreamCount++;
             }
             break;
-          case StreamType.audio:
+          case MediaStreamType.audio:
             audioStreamCount++;
             break;
-          case StreamType.text:
+          case MediaStreamType.text:
             textStreamCount++;
             break;
         }
@@ -177,7 +182,7 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
     // XXX: Stream support not implemented.
     // canSelectStreamNotifier.value = videoStreamCount > 1 || audioStreamCount > 1 || textStreamCount > 0;
 
-    final selectedVideo = await getSelectedStream(StreamType.video);
+    final selectedVideo = await getSelectedStream(MediaStreamType.video);
     if (selectedVideo != null) {
       final streamIndex = selectedVideo.index;
       final streamInfo = allStreams.firstWhereOrNull((stream) => stream[Keys.index] == streamIndex);
@@ -283,18 +288,18 @@ class VideoPlayerAvesVideoController extends AvesVideoController {
   Future<void> _applySpeed() => _instance.setPlaybackSpeed(speed);
 
   @override
-  Future<void> selectStream(StreamType type, StreamSummary? selected) async {
+  Future<void> selectStream(MediaStreamType type, MediaStreamSummary? selected) async {
     debugPrint('XXX: selectStream not implemented');
   }
 
   @override
-  Future<StreamSummary?> getSelectedStream(StreamType type) async {
+  Future<MediaStreamSummary?> getSelectedStream(MediaStreamType type) async {
     debugPrint('XXX: getSelectedStream not implemented');
     return null;
   }
 
   @override
-  List<StreamSummary> get streams => _streams;
+  List<MediaStreamSummary> get streams => _streams;
 
   @override
   Future<Uint8List> captureFrame() async {
@@ -322,16 +327,16 @@ extension ExtraVideoPlayerValue on VideoPlayerValue {
   }
 }
 
-extension ExtraStreamType on StreamType {
-  static StreamType? fromTypeString(String? type) {
+extension ExtraStreamType on MediaStreamType {
+  static MediaStreamType? fromTypeString(String? type) {
     switch (type) {
-      case StreamTypes.video:
-        return StreamType.video;
-      case StreamTypes.audio:
-        return StreamType.audio;
-      case StreamTypes.subtitle:
-      case StreamTypes.timedText:
-        return StreamType.text;
+      case MediaStreamTypes.video:
+        return MediaStreamType.video;
+      case MediaStreamTypes.audio:
+        return MediaStreamType.audio;
+      case MediaStreamTypes.subtitle:
+      case MediaStreamTypes.timedText:
+        return MediaStreamType.text;
       default:
         return null;
     }
