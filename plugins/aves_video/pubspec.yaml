@@ -10,8 +10,14 @@ dependencies:
     sdk: flutter
   aves_model:
     path: ../aves_model
+  plugin_platform_interface: ^2.0.2
 
 dev_dependencies:
   flutter_lints:
 
 flutter:
+  plugin:
+    platforms:
+      android:
+        package: deckers.thibault.aves.aves_video
+        pluginClass: AvesVideoPlugin

@@ -217,7 +217,6 @@ dependencies {
     implementation 'com.github.deckerst.mp4parser:isoparser:7b698ab674'
     implementation 'com.github.deckerst.mp4parser:muxer:7b698ab674'
     implementation 'com.github.deckerst:pixymeta-android:706bd73d6e'
-    implementation 'com.google.android.exoplayer:exoplayer-core:2.18.5'
 
     // huawei flavor only
     huaweiImplementation 'com.huawei.agconnect:agconnect-core:1.8.0.300'
