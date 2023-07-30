@@ -49,3 +49,5 @@ app.*.map.json
 # screenshot generation
 /test_driver/assets/screenshots/
 /screenshots/
+
+todo.txt
